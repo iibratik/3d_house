@@ -1,0 +1,64 @@
+interface Developer {
+    id: number;
+    name: string;
+    logo: string;
+    description: string;
+    founded: string;
+    completedProjects: number;
+    contact: {
+        phone: string;
+        email: string;
+        website: string;
+        address: string;
+    };
+    projects: {
+        id: number;
+        name: string;
+        image: string;
+        location: string;
+        status: string;
+        priceFrom: number;
+    }[];
+    achievements: string[];
+}
+
+const mockDevelopers: Developer[] = [
+    {
+        id: 1,
+        name: "UzbekDevelop",
+        logo: "https://images.unsplash.com/photo-1560472355-536de3962603?w=200&h=200&fit=crop",
+        description: "Ведущий застройщик Узбекистана с 15-летним опытом работы. Специализируется на строительстве жилых комплексов премиум-класса.",
+        founded: "2009",
+        completedProjects: 18,
+        contact: {
+            phone: "+998 71 123 45 67",
+            email: "info@uzbekdevelop.uz",
+            website: "www.uzbekdevelop.uz",
+            address: "г. Ташкент, ул. Амира Темура, 10"
+        },
+        projects: [
+            {
+                id: 1,
+                name: "Tashkent City",
+                image: "https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=400&h=300&fit=crop",
+                location: "Ташкент, Чиланзарский район",
+                status: "Строится",
+                priceFrom: 450
+            },
+            {
+                id: 7,
+                name: "Samarkand Plaza",
+                image: "https://images.unsplash.com/photo-1518005020951-eccb494ad742?w=400&h=300&fit=crop",
+                location: "Самарканд, Центр",
+                status: "Сдан",
+                priceFrom: 380
+            }
+        ],
+        achievements: [
+            "15 лет успешной работы",
+            "Более 5000 довольных клиентов",
+            "Лауреат премии 'Застройщик года 2023'",
+            "Сертификат качества ISO 9001"
+        ]
+    }
+];
