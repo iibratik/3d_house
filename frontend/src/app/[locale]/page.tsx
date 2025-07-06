@@ -18,6 +18,7 @@ export default function HomePage() {
   const [activeModelIndex, setActiveModelIndex] = useState<number | null>(null);
 
 
+
   useEffect(() => {
     async function getComplexes() {
       await fetchAllComplexes();
@@ -118,7 +119,8 @@ export default function HomePage() {
                     index={index}
                   />
                 </div>
-              ))}
+              ))
+            }
           </div>
 
           <div className="text-center">

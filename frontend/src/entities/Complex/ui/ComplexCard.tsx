@@ -82,7 +82,8 @@ export function ComplexCard({
     return () => {
       isMounted = false;
     };
-  }, [developerId, getDeveloperById]);
+
+  }, [developerId, getDeveloperById, image]);
 
   return (
     <div className="complex-card group bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700">
