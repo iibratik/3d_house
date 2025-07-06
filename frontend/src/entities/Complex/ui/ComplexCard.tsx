@@ -1,30 +1,41 @@
+'use client';
 
-"use client"
 import React, { useEffect, useState } from 'react';
 import { MapPin } from 'lucide-react';
 import { Complex } from '../model/types';
-import { getStatusInfo, formatPrice, } from '@/shared/lib/utils';
-import { Button } from '../../../shared/ui/Button/Button';
-import { Link, } from '@/i18n/navigation';
-import { useLocale } from 'next-intl';
+import { getStatusInfo, formatPrice } from '@/shared/lib/utils';
+import { Button } from '@/shared/ui/Button/Button';
+
 import { Developer, DeveloperCard } from '@/entities/Developer';
 import { useDeveloperStore } from '@/entities/Developer/model/store';
 import { AMENITY_LABELS } from '@/shared/lib/amenities';
 import { ModelPreViewer } from '@/entities/Model-viewer/components/ModelPreViewer';
+import { useRouter } from 'next/navigation';
 
 interface ComplexCardProps {
   complex: Complex;
+  isAllowedToLoad: boolean;
+  setLoadingCount: (fn: (prev: number) => number) => void;
+  onLoadComplete: () => void;
+  activeModelIndex: number | null;
+  setActiveModelIndex: (index: number | null) => void;
+  index: number;
 }
 
 export function ComplexCard({
   complex,
+  setLoadingCount,
+  onLoadComplete,
+  activeModelIndex,
+  setActiveModelIndex,
+  index,
 }: ComplexCardProps) {
-  const locale = useLocale()
   const {
     id,
     name,
     developerId,
     uri,
+    image,
     squareMin,
     squareMax,
     price,
@@ -33,7 +44,7 @@ export function ComplexCard({
     address,
     amenities,
   } = complex;
-
+  const router = useRouter()
   const statusInfo = getStatusInfo(status);
   const [developer, setDeveloper] = useState<Developer | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -42,8 +53,6 @@ export function ComplexCard({
   const visibleAmenities = Object.entries(amenities[0])
     .filter(([key, value]) => value === 1 && key in AMENITY_LABELS)
     .map(([key]) => AMENITY_LABELS[key]);
-
-
 
   useEffect(() => {
     let isMounted = true;
@@ -57,8 +66,8 @@ export function ComplexCard({
       try {
         const response = await getDeveloperById(developerId);
 
-        if (isMounted && response == 'success') {
-          const loadedDeveloper = useDeveloperStore.getState().currentDeveloper
+        if (isMounted && response === 'success') {
+          const loadedDeveloper = useDeveloperStore.getState().currentDeveloper;
           setDeveloper(loadedDeveloper);
         }
       } catch (e) {
@@ -77,18 +86,24 @@ export function ComplexCard({
 
   return (
     <div className="complex-card group bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700">
-      {/* 3D */}
       <div className="relative h-100 overflow-hidden">
-        <ModelPreViewer modelUrl={uri} />
+        <ModelPreViewer
+          modelUrl={uri}
+          imageUrl={image}
+          setLoadingCount={setLoadingCount}
+          onLoadComplete={onLoadComplete}
+          activeModelIndex={activeModelIndex}
+          setActiveModelIndex={setActiveModelIndex}
+          index={index}
+        />
         <div className="absolute top-3 left-3">
           <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusInfo.color}`}>
             {statusInfo.text}
           </span>
         </div>
-        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        {/* <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" /> */}
       </div>
 
-      {/* Контент */}
       <div className="p-5">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2">
           {name}
@@ -96,16 +111,11 @@ export function ComplexCard({
 
         <div className="flex items-center text-gray-600 dark:text-gray-400 mb-3 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
           <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />
-          <span className="text-sm">
-            {address}
-          </span>
+          <span className="text-sm">{address}</span>
         </div>
 
-
-        {/* Застройщик */}
-        <h3 className='mb-2'>Застройщик:</h3>
+        <h3 className="mb-2">Застройщик:</h3>
         {!isLoading && developer && <DeveloperCard developer={developer} />}
-
 
         <div className="space-y-2 mb-4">
           <div className="flex justify-between text-sm">
@@ -144,10 +154,12 @@ export function ComplexCard({
           </div>
         </div>
 
-        <Link href={`/complexes/${id}`} locale={locale}>
-          <Button className='w-full'>Подробнее</Button>
-        </Link>
+        <a className="block w-full">
+          <Button className="w-full" onClick={() => {
+            router.push(`/complexes/${id}`);
+          }}>Подробнее</Button>
+        </a>
       </div>
     </div>
   );
-};
+}

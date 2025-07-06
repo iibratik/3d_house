@@ -1,1 +1,1 @@
-export { ModelViewer } from './components/ModelPreViewer';
+export { ModelViewer } from './components/ModelViewer';

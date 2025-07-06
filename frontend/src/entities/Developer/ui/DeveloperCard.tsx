@@ -1,13 +1,16 @@
 "use client"
 import { Building2 } from "lucide-react";
 import { DeveloperProps, } from '../model/types';
-
+import { useRouter } from 'next/navigation';
 
 export function DeveloperCard({ developer }: DeveloperProps) {
-
+    const router = useRouter()
     return (
         <>
             <div
+                onClick={() => {
+                    router.push(`/developers/${developer.id}`)
+                }}
                 className="flex items-center mb-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-2 -m-2 rounded-lg transition-colors"
             >
                 {developer ? (

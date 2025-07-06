@@ -32,21 +32,14 @@ export interface Complex {
     squareMax: string;
     floors: number;
     uri: string;
+    image: string;
     amenities: Amenity[];
     date?: string,
 }
 
 export interface ComplexFilters {
-    cityValue?: string;
-    cityRange: { label: string; value: string, }[]
-    priceRangeValue?: string;
-    priceRange: { label: string; value: string, }[]
-    areaRangeValue?: string;
-    areaRange: { label: string; value: string, }[]
-    roomsValue?: string;
-    roomRange: { label: string; value: string, }[]
-    statusValue?: ComplexStatus;
-    statusRange: { label: string; value: 'ready' | 'construction' | 'planned' }[]
+    filterRanges: string[]
+    filterValue: string
 }
 
 export interface Block {

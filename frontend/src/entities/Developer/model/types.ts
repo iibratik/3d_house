@@ -4,6 +4,11 @@ export interface Developer {
   name: string;
   logo: string;
   description: string;
+  phoneNumber: string;
+  email: string;
+  website: string;
+  address: string;
+  founded: string;
 }
 
 export interface DeveloperProps {

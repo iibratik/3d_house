@@ -4,123 +4,59 @@ import React, { useEffect, useState } from 'react';
 import { FilterBar } from '@/features/ComplexFilters';
 import { ComplexCard } from '@/entities/Complex';
 import { Button } from '@/shared/ui/Button/Button';
-import { ComplexFilters } from '@/entities/Complex/model/types';
+// import { ComplexFilters } from '@/entities/Complex/model/types';
 import { Footer } from '@/widgets/Footer/ui/Footer';
 import { useComplexStore } from '@/entities/Complex/model/store';
 
-// const mockProperties: Complex[] = [
-//   {
-//     id: 1,
-//     name: "Жилой комплекс Tashkent City",
-//     modelLink: '/3dModels/Building/Building_ktx2.glb',
-//     location: {
-//       city: "Ташкент",
-//       district: "Чиланзарский район"
-//     },
-//     areaRange: {
-//       min: 45,
-//       max: 120
-//     },
-//     price: 450,
-//     floors: 25,
-//     status: "construction",
-//     amenities: ["Парковка", "Охрана", "Детская площадка", "Фитнес-зал"],
-//     completionDate: "IV квартал 2025",
-//     developer: {
-//       id: 1,
-//       name: "Fergana Construction Group",
-//       logo: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop"
-//     }
-//   },
-//   {
-//     id: 2,
-//     name: "Комплекс Samarkand Gardens",
-//     modelLink: '/3dModels/Building1.glb',
-//     location: {
-//       city: "Самарканд",
-//       district: "Центральный район"
-//     },
-//     areaRange: {
-//       min: 55,
-//       max: 95
-//     },
-//     price: 320,
-//     floors: 12,
-//     status: "ready",
-//     amenities: ["Парковка", "Консьерж", "Спортплощадка"],
-//     developer: {
-//       id: 1,
-//       name: "Fergana Construction Group",
-//       logo: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop"
-//     }
-//   },
-//   {
-//     id: 3,
-//     name: "Oasis Residence",
-//     modelLink: '/3dModels/Building2.glb',
-//     location: {
-//       city: "Ташкент",
-//       district: "Мирзо-Улугбекский район"
-//     },
-//     areaRange: {
-//       min: 60,
-//       max: 140
-//     },
-//     price: 580,
-//     floors: 18,
-//     status: "construction",
-//     amenities: ["Подземная парковка", "Охрана 24/7", "Бассейн", "Сауна", "Детский сад"],
-//     completionDate: "II квартал 2026",
-//     developer: {
-//       id: 1,
-//       name: "Fergana Construction Group",
-//       logo: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop"
-//     }
-//   },
-// ];
 export default function HomePage() {
-  const { fetchAllComplexes, getFiltered, isLoading, error } = useComplexStore();
+  const { fetchAllComplexes, isLoading, error, getFilterValues, getFiltered } = useComplexStore();
+  const complexes = useComplexStore.getState().complexes
+  const currentFilters = useComplexStore.getState().currentFilters
 
-  const complexes = getFiltered();
-  const [filters, setFilters] = useState<ComplexFilters>(
-    {
-      cityRange: [
-        { label: 'Весь город', value: '' },
-        { label: 'Ташкент', value: 'Tashkent' },
-        { label: 'Самарканд', value: 'Samarkand' },
-        { label: 'Бухара', value: 'Bukhara' },
-        { label: 'Нукус', value: 'Nukus' },
-        { label: 'Фергана', value: 'Fergana' },
-      ],
-      priceRange: [
-        { label: 'Весь город', value: '' }
-      ],
-      areaRange: [
-        { label: 'Площадь', value: '' },
-      ],
-      roomRange: [
-        { label: 'Весь город', value: '' }
-      ],
-      statusRange: [
-        { label: 'Весь город', value: 'planned' }
-      ]
-    }
-  );
+  const [loadingCount, setLoadingCount] = useState(0);
+  const [loaded, setLoaded] = useState<boolean[]>([]);
+  const [activeModelIndex, setActiveModelIndex] = useState<number | null>(null);
 
 
   useEffect(() => {
-    fetchAllComplexes();
-  }, [fetchAllComplexes,]);
+    async function getComplexes() {
+      await fetchAllComplexes();
+
+      getFilterValues()
+    }
+    getComplexes()
+  }, [fetchAllComplexes, getFilterValues]);
+
+  useEffect(() => {
+    setLoaded(Array(complexes.length).fill(false));
+  }, [complexes]);
+
+
+  const handleLoaded = (index: number) => {
+    setLoaded((prev) => {
+      const copy = [...prev];
+      copy[index] = true;
+      return copy;
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* <Navigation /> */}
-      <FilterBar filters={filters} onFiltersChange={setFilters} />
-
-      {/* Герой секция */}
-      <section className="uzbek-pattern bg-gradient-to-br h-screen   from-blue-50 to-green-50 dark:from-blue-900/20 dark:to-green-900/20 py-16" style={{
-        backgroundSize: `cover`,
-        backgroundImage: `linear-gradient(#3B82F6B3, #0F5729A6), url('https://images.unsplash.com/photo-1466442929976-97f336a657be?w=1920&h=1080&fit=crop')`
-      }}>
+      <FilterBar
+        filters={currentFilters}
+        onFiltersChange={async (newFilters) => {
+          useComplexStore.setState({ currentFilters: newFilters })
+          getFiltered()
+        }}
+        labels={['Цена', 'Город', 'Площадь', 'Статус']}
+      />
+      <section
+        className="uzbek-pattern bg-gradient-to-br h-screen from-blue-50 to-green-50 dark:from-blue-900/20 dark:to-green-900/20 py-16"
+        style={{
+          backgroundSize: `cover`,
+          backgroundImage: `linear-gradient(#3B82F6B3, #0F5729A6), url('https://images.unsplash.com/photo-1466442929976-97f336a657be?w=1920&h=1080&fit=crop')`,
+        }}
+      >
         <div className="container mx-auto px-4 h-screen text-center flex items-center flex-col justify-center">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
             Найдите дом своей мечты
@@ -139,16 +75,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Статистика */}
-      {/* <section className="py-12 bg-white dark:bg-gray-800">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-
-          </div>
-        </div>
-      </section> */}
-
-      {/* Каталог */}
       <section className="all-aprtaments-catalog py-16">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
@@ -179,27 +105,30 @@ export default function HomePage() {
               </div>
             )}
 
-            {!isLoading && !error && complexes.map((complex) => (
-              <div key={complex.id} className="animate-fade-in">
-                <ComplexCard
-                  complex={complex}
-                />
-              </div>
-            ))}
-
+            {!isLoading && !error &&
+              complexes.map((complex, index) => (
+                <div key={complex.id} className="animate-fade-in">
+                  <ComplexCard
+                    complex={complex}
+                    isAllowedToLoad={loadingCount < 3 && !loaded[index]}
+                    setLoadingCount={setLoadingCount}
+                    onLoadComplete={() => handleLoaded(index)}
+                    activeModelIndex={activeModelIndex}
+                    setActiveModelIndex={setActiveModelIndex}
+                    index={index}
+                  />
+                </div>
+              ))}
           </div>
 
           <div className="text-center">
-            <Button onClick={() => {
-              fetchAllComplexes()
-            }} variant="primary" className="px-8 py-3">
+            <Button onClick={fetchAllComplexes} variant="primary" className="px-8 py-3">
               Показать еще объекты
             </Button>
           </div>
         </div>
       </section>
 
-      {/* Преимущества */}
       <section className="py-16 bg-gradient-to-br from-blue-50 to-green-50 dark:from-blue-900/20 dark:to-green-900/20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
@@ -214,7 +143,9 @@ export default function HomePage() {
                 <span className="text-white text-2xl">✓</span>
               </div>
               <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Проверенные застройщики</h3>
-              <p className="text-gray-600 dark:text-gray-400">Работаем только с надежными компанями с хорошей репутацией</p>
+              <p className="text-gray-600 dark:text-gray-400">
+                Работаем только с надежными компанями с хорошей репутацией
+              </p>
             </div>
 
             <div className="text-center p-6 bg-white dark:bg-gray-800 rounded-xl shadow-sm">
@@ -222,7 +153,9 @@ export default function HomePage() {
                 <span className="text-white text-2xl">🏠</span>
               </div>
               <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Лучшие локации</h3>
-              <p className="text-gray-600 dark:text-gray-400">Жилые комплексы в развитых районах с хорошей инфраструктурой</p>
+              <p className="text-gray-600 dark:text-gray-400">
+                Жилые комплексы в развитых районах с хорошей инфраструктурой
+              </p>
             </div>
 
             <div className="text-center p-6 bg-white dark:bg-gray-800 rounded-xl shadow-sm">
@@ -230,13 +163,14 @@ export default function HomePage() {
                 <span className="text-white text-2xl">💼</span>
               </div>
               <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Поддержка 24/7</h3>
-              <p className="text-gray-600 dark:text-gray-400">Наши эксперты всегда готовы помочь с выбором недвижимости</p>
+              <p className="text-gray-600 dark:text-gray-400">
+                Наши эксперты всегда готовы помочь с выбором недвижимости
+              </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Футер */}
       <Footer />
     </div>
   );

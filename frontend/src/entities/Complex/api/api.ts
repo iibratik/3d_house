@@ -17,7 +17,7 @@ export const complexApi = {
     if (Array.isArray(response.data) && response.data.length > 0) {
       return response.data[0];
     }
-    // Если массив пустой — выбрасываем ошибку или возвращаем заглушку
+
     throw new Error(`Complex with id=${complexId} not found`);
   },
   async getBlocksByComplexId(complexId: number): Promise<Block[]> {
@@ -26,7 +26,6 @@ export const complexApi = {
     if (Array.isArray(response.data) && response.data.length > 0) {
       return response.data;
     }
-    // Если массив пустой — выбрасываем ошибку или возвращаем заглушку
     throw new Error(`Block with id=${complexId} not found`);
   },
   async getApartamentById(blockId: number): Promise<Apartament[]> {

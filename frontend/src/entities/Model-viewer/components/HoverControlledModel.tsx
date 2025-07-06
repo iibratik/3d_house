@@ -82,7 +82,14 @@ export function HoverControlledModel({ url, onError, onLoaded }: Props) {
         event.preventDefault(); // Блокирует прокрутку страницы
 
         setScaleFactor(prev => {
-          const next = THREE.MathUtils.clamp(prev - event.deltaY * 0.001, 0.1, 3);
+          const MIN_SCALE = 1;
+          const MAX_SCALE = 2;
+          const SCALE_SPEED = 0.002;
+          const next = THREE.MathUtils.clamp(
+            prev - event.deltaY * SCALE_SPEED,
+            MIN_SCALE,
+            MAX_SCALE
+          );
           return next;
         });
       }

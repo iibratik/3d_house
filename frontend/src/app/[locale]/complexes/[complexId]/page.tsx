@@ -16,7 +16,7 @@ import { useDeveloperStore } from '@/entities/Developer/model/store';
 import { Link } from '@/i18n/navigation';
 import { Complex } from '@/entities/Complex';
 import { Apartament, Block } from '@/entities/Complex/model/types';
-import { Developer } from '@/entities/Developer';
+import { Developer, DeveloperCard } from '@/entities/Developer';
 import { ModelViewer } from '@/entities/Model-viewer';
 
 
@@ -132,40 +132,41 @@ export default function ComplexPage() {
     <div className=" bg-gray-50 dark:bg-gray-900">
       {/* Hero Banner */}
       <section
-        className="flex items-end relative bg-cover bg-center bg-no-repeat"
+        className="flex lg:flex-row flex-col items-end relative pt-3"
+
       >
-        <div className="absolute z-10 top-3 left-20">
+        <div className="container static z-10 top-3 left-20 lg:absolute flex items-center justify-center lg:w-full lg:my-0 my-3">
           <Button
             variant="secondary"
             onClick={() => router.back()}
-            className="flex items-center gap-2"
+            className="flex items-center lg:gap-2 gap-3 lg: lg:w-fit w-[90%] justify-center"
           >
             <ArrowLeft className="w-4 h-4" />
             Назад
           </Button>
         </div>
-        <div className="container mx-auto px-4 pb-16 text-white relative ">
-          <div className="h-[93vh] model-content">
-            <Model modelUrl={complex.uri} />
+        <div className="container mx-auto px-4 lg:pb-16 pb-0 flex-col  text-white relative ">
+          <div className="lg:h-[85vh] h-[40vh] model-content">
+            <ModelViewer modelUrl={complex.uri} />
           </div>
 
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
+          <h1 className="text-4xl lg:text-left text-center md:text-5xl font-bold mt-4 mb-4">
             {complex.name}
           </h1>
           <div className="flex items-center mb-4">
             <MapPin className="w-5 h-5 mr-2" />
-            <span className="text-lg">
+            <span className="text-lg lg:text-left text-center">
               {complex.address},
             </span>
           </div>
-          <div className="text-2xl font-bold text-green-400">
+          <div className="text-2xl lg:text-left text-center font-bold text-green-400">
             от {complex.price ? formatPrice(complex.price) : ''} сум
           </div>
         </div>
       </section>
 
       {/* Complex Info */}
-      <section className="py-16">
+      <section className="lg:py-16 py-8">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Main Info */}
@@ -321,7 +322,8 @@ export default function ComplexPage() {
                   <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
                     Застройщик
                   </h3>
-                  <div
+                  <DeveloperCard developer={loadedDeveloper} />
+                  {/* <div
                     className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-3 rounded-lg transition-colors"
                   >
                     {loadedDeveloper.logo && (
@@ -339,7 +341,7 @@ export default function ComplexPage() {
                         Посмотреть профиль
                       </div>
                     </div>
-                  </div>
+                  </div> */}
                 </div>
               )}
 

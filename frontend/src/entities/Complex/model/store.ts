@@ -1,25 +1,26 @@
 import { create } from 'zustand';
 
 import { complexApi } from '../api/api';
-import { Apartament, Block, Complex } from './types';
-import { Developer } from '@/entities/Developer';
+import { Apartament, Block, Complex, ComplexFilters, } from './types';
+
 
 interface ComplexState {
-    allComplexes: Complex[];      // все комплексы (1 раз загружаются с API)
-    complexes: Complex[];         // те, что показываются на экране
+    allComplexes: Complex[];
+    complexes: Complex[];
     currentComplex: Complex | null;
     currentBlocks: Block[],
     currentApartaments: Apartament[],
-    currentDeveloper: Developer[],
+    currentFilters: ComplexFilters[],
+
     page: number;
     pageSize: number;
     isLoading: boolean;
     error: string | null;
-    filter: 'all' | 'ready' | 'planned' | 'construction';
+
 
     getBlockByComplexId: (complexId: number) => Promise<string>
-    setFilter: (filter: ComplexState['filter']) => void;
-    getFiltered: () => Complex[];
+    getFiltered: () => void;
+    getFilterValues: () => void
     fetchAllComplexes: () => Promise<void>;
     getComplexById: (complexId: number) => Promise<string>;
     getApartaments: (blockId: number) => Promise<string | void>
@@ -32,14 +33,102 @@ export const useComplexStore = create<ComplexState>((set, get) => ({
     allComplexes: [],
     currentDeveloper: [],
     currentComplex: null,
-
+    currentFilters: [],
     isLoading: false,
     error: null,
-    filter: 'all',
     page: 0,
     pageSize: 6,
 
+    getFiltered: () => {
+        const complexes = get().allComplexes
+        const filters = get().currentFilters
 
+        // Парсер диапазона цены
+        const parsePriceRange = (str: string): { min: number; max: number } => {
+            const min = 0, max = Infinity
+            const toM = /до\s*(\d+(?:\.\d+)?)\s*млн/.exec(str)
+            const overB = /свыше\s*(\d+(?:\.\d+)?)\s*млрд/.exec(str)
+            const rng = /(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)/.exec(str)
+            if (toM) return { min, max: +toM[1] * 1e6 }
+            if (overB) return { min: +overB[1] * 1e9, max }
+            if (rng) {
+                const unit = str.includes('млрд') ? 1e9 : str.includes('млн') ? 1e6 : 1
+                return { min: +rng[1] * unit, max: +rng[2] * unit }
+            }
+            return { min, max }
+        }
+
+        // Парсер диапазона площади
+        const parseAreaRange = (str: string): { min: number; max: number } => {
+            const m = /(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)/.exec(str)
+            return m
+                ? { min: +m[1], max: +m[2] }
+                : { min: 0, max: Infinity }
+        }
+
+        const filtered = complexes.filter(cpx =>
+            filters.every((f, idx) => {
+                const val = f.filterValue
+                // если фильтр не выбран или значение не входит в возможные варианты — пропускаем
+                if (!val || !f.filterRanges.includes(val)) return true
+
+                switch (idx) {
+                    case 0: { // price
+                        const { min, max } = parsePriceRange(val)
+                        return cpx.price >= min && cpx.price <= max
+                    }
+                    case 1: { // city
+                        const city = cpx.address.split(',')[0].trim()
+                        return city === val
+                    }
+                    case 2: { // area
+                        const { min, max } = parseAreaRange(val)
+                        const sqMin = +cpx.squareMin
+                        const sqMax = +cpx.squareMax
+                        // пересечение диапазонов
+                        return sqMax >= min && sqMin <= max
+                    }
+                    case 3: { // status
+                        return cpx.status === val
+                    }
+                    default:
+                        return true
+                }
+            })
+        )
+
+        set({ complexes: filtered })
+    },
+    getFilterValues() {
+        const sorted = [...get().allComplexes].sort((a, b) => a.price - b.price)
+
+        // 2) Собрать уникальные наборы для каждого фильтра
+        const filterPrices = [...new Set(sorted.map(i => i.filterPrice))]
+        const cities = [...new Set(sorted.map(i => i.address.split(',')[0].trim()))]
+        const sizeRanges = [...new Set(sorted.map(i => `${i.squareMin} - ${i.squareMax} М²`))]
+        const statuses = [...new Set(sorted.map(i => i.status))]
+
+        const blocks: ComplexFilters[] = [
+            {
+                filterRanges: filterPrices,
+                filterValue: 'Цена'  // можно задать дефолт по-другому
+            },
+            {
+                filterRanges: cities,
+                filterValue: 'Все города'
+            },
+            {
+                filterRanges: sizeRanges,
+                filterValue: 'Площадь'
+            },
+            {
+                filterRanges: statuses,
+                filterValue: 'Статусы'
+            }
+        ]
+        set({ currentFilters: blocks })
+
+    },
     getComplexById: async (complexId) => {
         try {
             const state = get();
@@ -81,7 +170,6 @@ export const useComplexStore = create<ComplexState>((set, get) => ({
             return 'error';
         }
     },
-    setFilter: (filter) => set({ filter }),
     fetchAllComplexes: async () => {
         set({ isLoading: true, error: null });
         try {
@@ -108,11 +196,7 @@ export const useComplexStore = create<ComplexState>((set, get) => ({
             set({ error: message, isLoading: false });
         }
     },
-    getFiltered() {
-        const { filter, complexes } = get();
-        if (filter === 'all') return complexes;
-        return complexes.filter(c => c.status === filter);
-    },
+
     getApartaments: async (blockId: number): Promise<'success' | 'error'> => {
         try {
             const apartaments = await complexApi.getApartamentById(blockId);
