@@ -11,7 +11,7 @@ interface ComplexState {
     currentBlocks: Block[],
     currentApartaments: Apartament[],
     currentFilters: ComplexFilters[],
-
+    setCurrentFloor: object | null,
     page: number;
     pageSize: number;
     isLoading: boolean;
@@ -38,7 +38,8 @@ export const useComplexStore = create<ComplexState>((set, get) => ({
     error: null,
     page: 0,
     pageSize: 6,
-
+    setCurrentFloor: null,
+    
     getFiltered: () => {
         const complexes = get().allComplexes
         const filters = get().currentFilters

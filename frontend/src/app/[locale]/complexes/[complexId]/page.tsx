@@ -132,14 +132,14 @@ export default function ComplexPage() {
     <div className=" bg-gray-50 dark:bg-gray-900">
       {/* Hero Banner */}
       <section
-        className="flex lg:flex-row flex-col items-end relative pt-3"
+        className="flex lg:flex-row flex-col lg:items-end items-start relative pt-3"
 
       >
-        <div className="container static z-10 top-3 left-20 lg:absolute flex items-center justify-center lg:w-full lg:my-0 my-3">
+        <div className="container static z-10 top-7 lg:left-55  lg:absolute w-fit mx-4 lg:my-0 my-3">
           <Button
             variant="secondary"
             onClick={() => router.back()}
-            className="flex items-center lg:gap-2 gap-3 lg: lg:w-fit w-[90%] justify-center"
+            className="flex items-center lg:gap-2 gap-3 lg: lg:w-fit w-fit justify-center"
           >
             <ArrowLeft className="w-4 h-4" />
             Назад
@@ -153,7 +153,7 @@ export default function ComplexPage() {
           <h1 className="text-4xl lg:text-left text-center md:text-5xl font-bold mt-4 mb-4">
             {complex.name}
           </h1>
-          <div className="flex items-center mb-4">
+          <div className="flex items-center mb-4 lg:flex-row flex-col">
             <MapPin className="w-5 h-5 mr-2" />
             <span className="text-lg lg:text-left text-center">
               {complex.address},
@@ -182,7 +182,7 @@ export default function ComplexPage() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                   <div className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                     <Building className="w-8 h-8 mx-auto mb-2 text-blue-600" />
-                    <div className="font-semibold text-gray-900 dark:text-white">
+                    <div className="font-semibold text-sm text-gray-900 dark:text-white">
                       {complex.floors}
                     </div>
                     <div className="text-sm text-gray-600 dark:text-gray-400">
@@ -191,7 +191,7 @@ export default function ComplexPage() {
                   </div>
                   <div className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                     <Users className="w-8 h-8 mx-auto mb-2 text-green-600" />
-                    <div className="font-semibold text-gray-900 dark:text-white">
+                    <div className="font-semibold text-sm text-gray-900 dark:text-white">
                       {complex.squareMin}–{complex.squareMax}
                     </div>
                     <div className="text-sm text-gray-600 dark:text-gray-400">
@@ -200,7 +200,7 @@ export default function ComplexPage() {
                   </div>
                   <div className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                     <MapPin className="w-8 h-8 mx-auto mb-2 text-red-600" />
-                    <div className="font-semibold text-gray-900 dark:text-white">
+                    <div className="font-semibold text-[12px] text-gray-900 dark:text-white">
                       {complex.address ? formatAddress(complex.address, 'district') : ''}
                     </div>
                     <div className="text-sm text-gray-600 dark:text-gray-400">

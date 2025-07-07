@@ -21,8 +21,7 @@ export const complexApi = {
     throw new Error(`Complex with id=${complexId} not found`);
   },
   async getBlocksByComplexId(complexId: number): Promise<Block[]> {
-    const response = await $api.get<Block[]>(`/apar/get/block/id?id=${complexId}`)
-
+    const response = await $api.get<Block[]>(`apar/get/block/id?id=${complexId}`)
     if (Array.isArray(response.data) && response.data.length > 0) {
       return response.data;
     }

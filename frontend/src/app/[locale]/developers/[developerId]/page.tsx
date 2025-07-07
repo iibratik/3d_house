@@ -95,7 +95,7 @@ export default function DeveloperPage() {
                         </Button>
                     </div>
 
-                    <div className="flex items-start justify-center space-x-6">
+                    <div className="flex lg:flex-row flex-col lg:items-start items-center text-center gap-3 justify-center space-x-6">
                         <img
                             src={developer.logo}
                             width='200'
