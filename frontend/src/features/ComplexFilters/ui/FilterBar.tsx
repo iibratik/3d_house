@@ -11,7 +11,7 @@ type FilterBarProps = {
 }
 
 export function FilterBar({ filters, onFiltersChange, labels }: FilterBarProps) {
-  const [filterStatus, setFilterStatus] = useState(false)
+  const [filterStatus, setFilterStatus] = useState(true)
   const handleFilterChange = (idx: number, value: string) => {
     const next = [...filters]
     next[idx] = { ...next[idx], filterValue: value }
@@ -25,12 +25,10 @@ export function FilterBar({ filters, onFiltersChange, labels }: FilterBarProps) 
   return (
     <div className="bg-white fixed left-0 w-full z-50 dark:bg-gray-800 shadow-sm border-b border-gray-100 dark:border-gray-700 py-4">
       <div className="container mx-auto px-4">
-        <div className="grid flex-wrap gap-4 items-center">
+        <div className="grid lg:flex lg:flex-row-reverse  flex-wrap gap-4 items-center">
           <div className="filter-btns flex justify-between">
-            <ArrowDownNarrowWide onClick={() => {
+            <ArrowDownNarrowWide className='lg:hidden' onClick={() => {
               setFilterStatus(!filterStatus)
-              console.log(filterStatus);
-
             }} />
             <button
               onClick={resetAll}
@@ -41,7 +39,7 @@ export function FilterBar({ filters, onFiltersChange, labels }: FilterBarProps) 
           </div>
 
           {filterStatus ? filters.map((f, idx) => (
-            <div key={idx} className="relative col-start-1">
+            <div key={idx} className="relative col-start-1 lg:col-auto">
               <select
                 value={f.filterValue}
                 onChange={e => handleFilterChange(idx, e.target.value)}

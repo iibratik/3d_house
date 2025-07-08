@@ -1,12 +1,16 @@
-
+"use client"
 import React from 'react';
 import { Search } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 export const Navigation: React.FC = () => {
+  const router = useRouter()
   return (
     <nav className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-100 dark:border-gray-800 sticky top-0 z-100">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
-          <div className="flex items-center space-x-2">
+          <div onClick={() => {
+            router.push('/')
+          }} className="flex items-center space-x-2 cursor-pointer">
             <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-green-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-sm">3D</span>
             </div>

@@ -138,7 +138,7 @@ export function ComplexCard({
         </div>
 
         <div className="mb-4">
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-1 min-h-[24px]">
             {visibleAmenities.slice(0, 4).map((amenity, index) => (
               <span
                 key={index}
