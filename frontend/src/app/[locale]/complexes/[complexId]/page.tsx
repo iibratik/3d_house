@@ -10,7 +10,7 @@ import {
   Calendar,
 } from 'lucide-react';
 import { Button } from '@/shared/ui/Button/Button';
-import { formatAddress, formatPrice, getVisibleAmenities } from '@/shared/lib/utils';
+import { formatAddress, formatPrice, getVisibleAmenities, parseFloorString } from '@/shared/lib/utils';
 import { useComplexStore } from '@/entities/Complex/model/store';
 import { useDeveloperStore } from '@/entities/Developer/model/store';
 import { Link } from '@/i18n/navigation';
@@ -21,21 +21,25 @@ import { ModelViewer } from '@/entities/Model-viewer';
 import { Modal } from '@/shared/ui/Modal/Modal';
 
 
+
 export default function ComplexPage() {
-  const { getComplexById, getBlockByComplexId, getApartaments } = useComplexStore()
-  const { getDeveloperById } = useDeveloperStore()
+  const { getComplexById, getBlockByComplexId, getApartaments } = useComplexStore();
+  const { getDeveloperById } = useDeveloperStore();
   const { locale, complexId } = useParams<{ locale: string; complexId: string }>();
 
   // states
-  const [complex, setComplex] = useState<Complex | null>(null)
+  const [complex, setComplex] = useState<Complex | null>(null);
   const [loadingComplex, setLoadingComplex] = useState<boolean>(true);
-  const [loadedBlocks, setLoadedBlocks] = useState<Block[] | null>(null)
-  const [loadedApartaments, setLoadedApartaments] = useState<Record<number, Apartament[]>>({});
-  const [loadedDeveloper, setLoadedDeveloper] = useState<Developer | null>(null)
+  const [loadedBlocks, setLoadedBlocks] = useState<Block[] | null>(null);
+  const [loadedApartaments, setLoadedApartaments] = useState<Apartament[]>([]);
+  const [loadedDeveloper, setLoadedDeveloper] = useState<Developer | null>(null);
   const [isOpenApartModal, setIsOpenApartModal] = useState(false);
+  const [currentApartaments, setCurrentApartaments] = useState<Apartament[]>([]);
   const [selectedApartment, setSelectedApartment] = useState<Apartament | null>(null);
+  const [selectedFloorInfo, setSelectedFloorInfo] = useState<{ block: string; floor: string } | null>(null);
+
   const router = useRouter();
-  const visibleAmenities = getVisibleAmenities(complex)
+  const visibleAmenities = getVisibleAmenities(complex);
 
 
 
@@ -62,6 +66,8 @@ export default function ComplexPage() {
     async function fetchBlocks() {
 
       const blockResult = await getBlockByComplexId(Number(complexId))
+      console.log(blockResult);
+
       if (blockResult === 'success') {
         const updatedBlocks = useComplexStore.getState().currentBlocks
         setLoadedBlocks(updatedBlocks)
@@ -75,15 +81,11 @@ export default function ComplexPage() {
       const result = await getApartaments(blockId);
       if (result === 'success') {
         const updated = useComplexStore.getState().currentApartaments;
-        setLoadedApartaments((prev) => ({
-          ...prev,
-          [blockId]: updated || [],
-        }));
+        // Просто перезаписываем весь массив
+        setLoadedApartaments(updated ?? []);
       } else {
-        setLoadedApartaments((prev) => ({
-          ...prev,
-          [blockId]: [],
-        }));
+        // На ошибке — сбрасываем в пустой массив
+        setLoadedApartaments([]);
       }
     }
     async function fetchDeveloper(developerId: number) {
@@ -134,22 +136,115 @@ export default function ComplexPage() {
     <div className=" bg-gray-50 dark:bg-gray-900">
       {/* Hero Banner */}
       <section
-        className="flex lg:flex-row flex-col lg:items-end items-start relative pt-3"
+        className="flex flex-col items-end gap-3 pt-3"
 
       >
-        <div className="container static z-10 top-7 lg:left-55  lg:absolute w-fit mx-4 lg:my-0 my-3">
+        <div className="container mx-auto px-5">
           <Button
             variant="secondary"
             onClick={() => router.back()}
-            className="flex items-center lg:gap-2 gap-3 lg: lg:w-fit w-fit justify-center"
+            className="flex items-center lg:gap-2 gap-3 lg:"
           >
             <ArrowLeft className="w-4 h-4" />
             Назад
           </Button>
         </div>
         <div className="container mx-auto px-4 lg:pb-16 pb-0 flex-col  text-white relative ">
-          <div className="lg:h-[85vh] h-[40vh] model-content">
-            <ModelViewer modelUrl={complex.uri} />
+          <div className="lg:h-[85vh] h-[40vh] model-content relative overflow-hidden rounded-2xl ">
+            <ModelViewer
+              modelUrl="/3dModels/Building/Building.glb"
+              className="h-full"
+              onFloorChange={(floorString) => {
+                console.log(floorString); // Пример: "AFloor3"
+
+                if (typeof floorString === 'string') {
+                  const parsed = parseFloorString(floorString);
+
+                  if (!parsed) {
+                    console.warn('Не удалось разобрать имя блока и этажа:', floorString);
+                    setSelectedFloorInfo(null);
+                    setCurrentApartaments([]);
+                    return;
+                  }
+
+                  const blk = loadedBlocks?.find(b => b.name === parsed.block);
+                  if (!blk) {
+                    console.warn(`Блок "${parsed.block}" не найден среди loadedBlocks`);
+                    setSelectedFloorInfo(null);
+                    setCurrentApartaments([]);
+                    return;
+                  }
+
+                  const floorNum = Number(parsed.floor);
+                  const filtered = loadedApartaments.filter(
+                    apt => apt.blockId === blk.id && apt.floor === floorNum
+                  );
+
+                  setSelectedFloorInfo(parsed);
+                  setCurrentApartaments(filtered);
+                } else {
+                  setSelectedFloorInfo(null);
+                  setCurrentApartaments([]);
+                }
+              }}
+
+            />
+            {selectedFloorInfo && (
+              <div className="complex-info absolute top-0 right-0 lg:w-[40%] md:w-[30%]  bg-primary-dark p-5">
+                <h3 className="mb-4 font-semibold text-white">
+                  {currentApartaments.length > 0
+                    ? 'Доступные квартиры на этаже:'
+                    : 'На этом этаже нет доступных квартир'}
+                </h3>
+
+                {/* Показываем список только если есть хотя бы одна квартира */}
+                {currentApartaments.length > 0 && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {currentApartaments.map((apt) => (
+                      <div key={apt.id}>
+                        <div
+                          className={`border rounded-lg p-4 ${apt.floor
+                            ? 'border-green-200 cursor-pointer bg-green-50 dark:bg-green-900/20 dark:border-green-800'
+                            : 'border-gray-200 bg-gray-50 dark:bg-gray-700 dark:border-gray-600'
+                            }`}
+                          onClick={() => {
+                            setIsOpenApartModal(true);
+                            setSelectedApartment(apt);
+                          }}
+                        >
+                          <div className="flex justify-between mb-2">
+                            <h4 className="font-semibold text-gray-900 dark:text-white">
+                              {apt.typeId}-комн.
+                            </h4>
+                            <span className="text-xs px-2 py-1 rounded bg-green-200 text-green-800 dark:bg-green-800 dark:text-green-200">
+                              Этаж {apt.floor}
+                            </span>
+                          </div>
+                          {/* <div className="text-sm text-gray-600 dark:text-gray-400">
+                            Цена: {formatPrice(apt.price)} сум
+                          </div> */}
+                        </div>
+
+                        {/* Модалка открывается только для выбранной квартиры */}
+                        {selectedApartment?.id === apt.id && isOpenApartModal && (
+                          <Modal isOpen onClose={() => setIsOpenApartModal(false)}>
+                            <h2 className="text-xl font-bold mb-4">
+                              {apt.typeId}-комн. квартира, этаж {apt.floor}
+                            </h2>
+                            {/* Здесь ваш iframe или любой другой контент */}
+                            <Button onClick={() => setIsOpenApartModal(false)}>
+                              Закрыть
+                            </Button>
+                          </Modal>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+
           </div>
 
           <h1 className="text-4xl lg:text-left text-center md:text-5xl font-bold mt-4 mb-4">
@@ -251,7 +346,7 @@ export default function ComplexPage() {
                   Доступные квартиры
                 </h2>
                 {loadedBlocks?.map((block) => {
-                  const blockApartaments = loadedApartaments[block.id] || [];
+                  const blockApartaments = loadedApartaments
 
                   // Подсчёт количества квартир по typeId
                   const typeCounts: Record<number, number> = {};
@@ -392,7 +487,6 @@ export default function ComplexPage() {
                                     </div>
                                   </Modal>
                                 )}
-
                               </div>
                             );
                           })}

@@ -1,30 +1,24 @@
+// components/ModelViewer.tsx
 'use client';
 
-import { Canvas, } from '@react-three/fiber';
-import {
-    Environment,
-    Html,
-    useProgress,
-    CameraControls as DreiCameraControls,
-    CameraControlsImpl,
-} from '@react-three/drei';
-import {
-    Suspense,
-    useState,
-    memo,
-    useRef,
-    useEffect,
-    FC,
-} from 'react';
+import React, { FC, Suspense, useEffect, useRef, useState } from 'react';
+import { Canvas } from '@react-three/fiber';
+import { Environment, Html, useProgress, CameraControls as DreiCameraControls, CameraControlsImpl } from '@react-three/drei';
 import { ModelViewerController } from './ModelViewerController';
+
+interface floorProps {
+    block: string,
+    floor: string
+}
 
 interface Props {
     modelUrl?: string;
     className?: string;
     showEnvironment?: boolean;
+    /** Передаём колбэк из родителя */
+    onFloorChange: (floorName: floorProps | null) => void;
 }
 
-// 🔄 Компонент загрузки модели
 const CanvasLoader: FC = () => {
     const { progress } = useProgress();
     return (
@@ -37,46 +31,36 @@ const CanvasLoader: FC = () => {
     );
 };
 
-
-const MemoizedModel = memo(ModelViewerController);
-
-// 🧱 Основной компонент
 export const ModelViewer: FC<Props> = ({
     modelUrl,
     className,
     showEnvironment = true,
+    onFloorChange,
 }) => {
-    const [error, setError] = useState<boolean>(false);
+    const [error, setError] = useState(false);
 
     return (
-        <div
-            className={`${className ?? ''
-                } h-full relative w-full bg-primary-dark rounded-lg overflow-hidden`}
-        >
-            <Canvas
-                camera={{ position: [10, 15, 15], fov: 50 }}
-
-            >
-                {/* Свет */}
+        <div className={`${className ?? ''} h-full relative w-full bg-primary-dark rounded-lg overflow-hidden`}>
+            <Canvas camera={{ position: [10, 15, 15], fov: 50 }}>
                 <ambientLight intensity={0.4} />
                 <directionalLight position={[10, 10, 5]} intensity={0.8} />
                 <directionalLight position={[-10, -10, -5]} intensity={0.3} />
 
-                {/* Среда */}
                 {showEnvironment && <Environment preset="apartment" />}
-
-                {/* Камера */}
                 <CameraControlsWithTarget />
 
-                {/* Модель */}
                 <Suspense fallback={<CanvasLoader />}>
                     {modelUrl && (
-                        <MemoizedModel url={modelUrl} onError={() => setError(true)} />
+                        <ModelViewerController
+                            url={modelUrl}
+                            onError={() => setError(true)}
+                            onLoaded={() => { }}
+                            onFloorChange={onFloorChange}
+                        />
                     )}
                 </Suspense>
             </Canvas>
 
-            {/* Ошибка */}
             {error && (
                 <div className="absolute inset-0 flex items-center justify-center bg-gray-100 z-10">
                     <div className="text-center">
@@ -94,22 +78,10 @@ export const ModelViewer: FC<Props> = ({
     );
 };
 
-// 🎥 Камера с направлением на центр
 const CameraControlsWithTarget: FC = () => {
     const ref = useRef<CameraControlsImpl | null>(null);
-
     useEffect(() => {
-        if (ref.current) {
-            ref.current.setLookAt(15, 7, 5, 0, 0, 0, true);
-        }
+        ref.current?.setLookAt(15, 7, 5, 0, 0, 0, true);
     }, []);
-
-    return (
-        <DreiCameraControls
-            ref={ref}
-            makeDefault
-            minDistance={8}
-            maxDistance={20}
-        />
-    );
+    return <DreiCameraControls ref={ref} makeDefault minDistance={8} maxDistance={20} />;
 };

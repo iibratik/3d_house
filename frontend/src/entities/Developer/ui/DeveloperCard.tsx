@@ -10,6 +10,9 @@ export function DeveloperCard({ developer }: DeveloperProps) {
             <div
                 onClick={() => {
                     router.push(`/developers/${developer.id}`)
+                    setTimeout(() => {
+                        window.scrollTo(0, 0);
+                    }, 100);
                 }}
                 className="flex items-center mb-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-2 -m-2 rounded-lg transition-colors"
             >

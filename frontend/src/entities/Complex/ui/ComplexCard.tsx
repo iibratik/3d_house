@@ -158,6 +158,9 @@ export function ComplexCard({
         <a className="block w-full">
           <Button className="w-full" onClick={() => {
             router.push(`/complexes/${id}`);
+            setTimeout(() => {
+              window.scrollTo(0, 0);
+            }, 100);
           }}>Подробнее</Button>
         </a>
       </div>

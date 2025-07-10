@@ -2,7 +2,7 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { AMENITY_LABELS } from "./amenities";
-import { ApartmentType } from "@/entities/Complex/model/types";
+import { Apartament, ApartmentType, Block } from "@/entities/Complex/model/types";
 
 
 
@@ -82,3 +82,11 @@ export function getApartmentTypeName(
   const found = apartmentTypes.find((type) => type.id === typeId);
   return found ? found.name : 'Неизвестный тип';
 };
+export function parseFloorString(floorStr: string): { block: string; floor: string } | null {
+  const match = floorStr.match(/^([A-F])Floor(\d{1,2})$/);
+  if (!match) return null;
+  return {
+    block: match[1],
+    floor: match[2],
+  };
+}

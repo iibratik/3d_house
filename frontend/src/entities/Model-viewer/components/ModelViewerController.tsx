@@ -1,156 +1,191 @@
+// components/ModelViewerController.tsx
 'use client';
 
+import React, { useRef, useEffect, useState, useMemo } from 'react';
+import { useFrame, useThree, ThreeEvent } from '@react-three/fiber';
 import { useGLTF } from '@react-three/drei';
-import { useRef, useEffect, useMemo, useState } from 'react';
-import { useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { KTX2Loader } from 'three-stdlib';
-
-// Импортируем модуль взаимодействия без store
-import {
-    getParentFloor,
-    resetMaterials,
-    highlightFloor,
-    animateGlow,
-} from '@/entities/Model-viewer/lib/interaction';
 
 interface Props {
     url: string;
     onError?: () => void;
     onLoaded?: () => void;
-    minZoom?: number;
-    maxZoom?: number;
-    onFloorSelect?: (floorName: string | null) => void;
+    /** новый проп */
+    onFloorChange?: (floorName: string | null) => void;
 }
 
 export function ModelViewerController({
     url,
     onError,
     onLoaded,
-    minZoom = 5,
-    maxZoom = 25,
-    onFloorSelect,
+    onFloorChange,
 }: Props) {
     const groupRef = useRef<THREE.Group>(null);
     const { gl, camera } = useThree();
-    const [floorGroups, setFloorGroups] = useState<THREE.Group[]>([]);
-    const [isDragging, setIsDragging] = useState(false);
-    const [prevMouseX, setPrevMouseX] = useState<number | null>(null);
-    const targetRotationY = useRef(0);
-    const targetDistance = useRef(camera.position.length());
 
-    const { scene: loadedScene } = useGLTF(url, undefined, undefined, (loader) => {
-        const ktx2 = new KTX2Loader().setTranscoderPath('https://cdn.jsdelivr.net/gh/pmndrs/drei-assets/basis/');
-        ktx2.detectSupport(gl);
-        loader.setKTX2Loader(ktx2);
-    });
+    const raycaster = useMemo(() => new THREE.Raycaster(), []);
+    const mouse = useRef(new THREE.Vector2());
 
-    const centeredScene = useMemo(() => {
-        if (!loadedScene) return null;
-        const clone = loadedScene.clone(true);
+    const activeRef = useRef<THREE.Group | null>(null);
+    const originalMaterials = useRef<Map<string, THREE.Material>>(new Map());
+    const animating = useRef(false);
+
+    const [targetY, setTargetY] = useState(0);
+    const [dragging, setDragging] = useState(false);
+    const [lastX, setLastX] = useState<number | null>(null);
+
+    const globalKTX2 = useMemo(() => {
+        const loader = new KTX2Loader().setTranscoderPath(
+            'https://cdn.jsdelivr.net/gh/pmndrs/drei-assets/basis/'
+        );
+        loader.detectSupport(gl);
+        return loader;
+    }, [gl]);
+
+    const { scene: rawScene } = useGLTF(
+        url,
+        true,
+        undefined,
+        loader => loader.setKTX2Loader(globalKTX2)
+    );
+
+    const centeredScene = useMemo<THREE.Group | null>(() => {
+        if (!rawScene) return null;
+        const clone = rawScene.clone(true) as THREE.Group;
         const box = new THREE.Box3().setFromObject(clone);
         const center = new THREE.Vector3();
         box.getCenter(center);
         clone.position.sub(center);
-
-        const groups: THREE.Group[] = [];
-        clone.traverse((child) => {
-            if (child instanceof THREE.Group) {
-                groups.push(child);
-            }
-        });
-        setFloorGroups(groups);
         return clone;
-    }, [loadedScene]);
+    }, [rawScene]);
 
+    const loadedOnce = useRef(false);
     useEffect(() => {
-        if (centeredScene) onLoaded?.();
-        else onError?.();
+        if (centeredScene && !loadedOnce.current) {
+            loadedOnce.current = true;
+            onLoaded?.();
+        }
+        if (!centeredScene) onError?.();
     }, [centeredScene, onLoaded, onError]);
 
-    useEffect(() => {
-        const canvas = gl.domElement;
-
-        const handleMouseDown = (e: MouseEvent) => {
-            if (e.button !== 0) return;
-            setIsDragging(true);
-            setPrevMouseX(e.clientX);
-        };
-
-        const handleMouseUp = () => {
-            setIsDragging(false);
-            setPrevMouseX(null);
-        };
-
-        const handleMouseMove = (e: MouseEvent) => {
-            if (!isDragging || prevMouseX === null) return;
-            const deltaX = e.clientX - prevMouseX;
-            targetRotationY.current += deltaX * 0.01;
-            setPrevMouseX(e.clientX);
-        };
-
-        const handleWheel = (e: WheelEvent) => {
-            e.preventDefault();
-            const delta = e.deltaY * 0.01;
-            targetDistance.current = THREE.MathUtils.clamp(
-                targetDistance.current + delta,
-                minZoom,
-                maxZoom
+    useFrame(() => {
+        if (groupRef.current) {
+            groupRef.current.rotation.y = THREE.MathUtils.lerp(
+                groupRef.current.rotation.y,
+                targetY,
+                0.1
             );
-        };
+        }
+        if (animating.current && activeRef.current) {
+            const t = (Date.now() % 1000) / 1000;
+            const intensity = 0.5 + 0.5 * Math.sin(t * Math.PI * 2);
+            activeRef.current.children.forEach(child => {
+                const mat = (child as THREE.Mesh).material as THREE.MeshStandardMaterial;
+                if (mat) mat.emissiveIntensity = intensity;
+            });
+        }
+    });
 
-        const handleClick = (e: MouseEvent) => {
-            const rect = canvas.getBoundingClientRect();
-            const mouse = new THREE.Vector2(
-                ((e.clientX - rect.left) / rect.width) * 2 - 1,
-                -((e.clientY - rect.top) / rect.height) * 2 + 1
-            );
+    const onPointerDown = (e: ThreeEvent<PointerEvent>) => {
+        e.stopPropagation();
+        setDragging(true);
+        setLastX(e.clientX);
+        e.target.setPointerCapture(e.pointerId);
+    };
+    const onPointerMove = (e: ThreeEvent<PointerEvent>) => {
+        if (!dragging || lastX === null) return;
+        e.stopPropagation();
+        const dx = (e.clientX - lastX) / 200;
+        setTargetY(prev => prev + dx);
+        setLastX(e.clientX);
+    };
+    const onPointerUp = (e: ThreeEvent<PointerEvent>) => {
+        e.stopPropagation();
+        setDragging(false);
+        setLastX(null);
+        e.target.releasePointerCapture(e.pointerId);
+    };
 
-            const raycaster = new THREE.Raycaster();
-            raycaster.setFromCamera(mouse, camera);
-            const intersects = raycaster.intersectObjects(floorGroups, true);
+    const onClick = (e: ThreeEvent<PointerEvent>) => {
+        e.stopPropagation();
+        if (!groupRef.current) return;
 
-            if (intersects.length > 0) {
-                const clicked = intersects[0].object;
-                const parentFloor = getParentFloor(clicked, floorGroups);
-                if (!parentFloor) {
-                    onFloorSelect?.(null);
-                    return;
-                }
+        const rect = gl.domElement.getBoundingClientRect();
+        mouse.current.set(
+            ((e.clientX - rect.left) / rect.width) * 2 - 1,
+            -((e.clientY - rect.top) / rect.height) * 2 + 1
+        );
+        raycaster.setFromCamera(mouse.current, camera);
 
-                resetMaterials(floorGroups);
-                highlightFloor(parentFloor);
-                animateGlow(parentFloor);
-
-                onFloorSelect?.(parentFloor.name || null);
-
-                console.log('✅ Клик по объекту:', clicked.name || clicked);
-                console.log('📦 Родительская группа:', parentFloor.name || '(без имени)');
-            } else {
-                console.log('❌ Клик мимо модели');
-                onFloorSelect?.(null);
+        const hits = raycaster.intersectObject(groupRef.current, true);
+        if (hits.length === 0) {
+            // Сброс
+            if (activeRef.current) {
+                activeRef.current.children.forEach(child => {
+                    const orig = originalMaterials.current.get(child.uuid);
+                    if (orig) (child as THREE.Mesh).material = orig;
+                    const mt = (child as THREE.Mesh).material as THREE.MeshStandardMaterial;
+                    if (mt) mt.emissiveIntensity = 0;
+                });
             }
-        };
+            activeRef.current = null;
+            animating.current = false;
+            onFloorChange?.(null);
+            return;
+        }
 
-        canvas.addEventListener('mousedown', handleMouseDown);
-        canvas.addEventListener('mouseup', handleMouseUp);
-        canvas.addEventListener('mousemove', handleMouseMove);
-        canvas.addEventListener('wheel', handleWheel, { passive: false });
-        canvas.addEventListener('click', handleClick);
+        let obj: THREE.Object3D = hits[0].object;
+        while (obj.parent && !(obj.parent instanceof THREE.Group)) {
+            obj = obj.parent;
+        }
+        const floorGrp = obj.parent as THREE.Group;
 
-        return () => {
-            canvas.removeEventListener('mousedown', handleMouseDown);
-            canvas.removeEventListener('mouseup', handleMouseUp);
-            canvas.removeEventListener('mousemove', handleMouseMove);
-            canvas.removeEventListener('wheel', handleWheel);
-            canvas.removeEventListener('click', handleClick);
-        };
-    }, [gl, camera, floorGroups, isDragging, prevMouseX, minZoom, maxZoom, onFloorSelect]);
+        if (!/^[A-Z]Floor\d+$/.test(floorGrp.name)) {
+            // не наш формат
+            return;
+        }
+
+        // Сброс предыдущей подсветки
+        if (activeRef.current) {
+            activeRef.current.children.forEach(child => {
+                const orig = originalMaterials.current.get(child.uuid);
+                if (orig) (child as THREE.Mesh).material = orig;
+                const mt = (child as THREE.Mesh).material as THREE.MeshStandardMaterial;
+                if (mt) mt.emissiveIntensity = 0;
+            });
+        }
+
+        // Подсветка нового
+        floorGrp.children.forEach(child => {
+            if ((child as THREE.Mesh).material) {
+                const mesh = child as THREE.Mesh;
+                if (!originalMaterials.current.has(mesh.uuid)) {
+                    originalMaterials.current.set(mesh.uuid, mesh.material.clone());
+                }
+                mesh.material = originalMaterials.current.get(mesh.uuid)!;
+                const mt = mesh.material as THREE.MeshStandardMaterial;
+                mt.emissive = new THREE.Color('red');
+                mt.emissiveIntensity = 1;
+            }
+        });
+
+        activeRef.current = floorGrp;
+        animating.current = true;
+
+        onFloorChange?.(floorGrp.name);
+    };
 
     if (!centeredScene) return null;
 
     return (
-        <group ref={groupRef}>
+        <group
+            ref={groupRef}
+            onClick={onClick}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+        >
             <primitive object={centeredScene} />
         </group>
     );
