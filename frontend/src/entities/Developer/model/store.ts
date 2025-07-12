@@ -8,6 +8,7 @@ interface DeveloperStore {
     currentDeveloper: Developer | null;
     developerComplexes: Complex[];
 
+    setCurrentDeveloper: (developer: Developer) => void;
     getDeveloperById: (developerId: number) => Promise<'success' | 'not_found' | 'error'>;
     getDeveloperComplexes: (developerId: number) => Promise<'success' | 'not_found' | 'error'>;
 }
@@ -15,7 +16,7 @@ interface DeveloperStore {
 export const useDeveloperStore = create<DeveloperStore>((set) => ({
     currentDeveloper: null,
     developerComplexes: [],
-
+    setCurrentDeveloper: (developer) => set({ currentDeveloper: developer }),
     getDeveloperById: async (developerId) => {
         try {
             if (!developerId) {

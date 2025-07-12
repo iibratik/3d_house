@@ -1,13 +1,13 @@
 export const publicRoutes = [
     '/',
-    '/complexes',
+    '/login',
     '/developers',
-    '/login'
+    '/complexes',
 ];
 
 export const privateRoutes = [
     '/dashboard',
     '/profile',
     '/settings',
-    // '/account',
 ];
+

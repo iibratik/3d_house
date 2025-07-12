@@ -116,7 +116,10 @@ export default function ComplexPage() {
       </div>
     );
   }
-
+  if (!complexId) {
+    console.error('complexId отсутствует в useParams!');
+    return <div>Ошибка: отсутствует ID комплекса</div>;
+  }
   if (!complex) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -155,8 +158,6 @@ export default function ComplexPage() {
               modelUrl="/3dModels/Building/Building.glb"
               className="h-full"
               onFloorChange={(floorString) => {
-                console.log(floorString); // Пример: "AFloor3"
-
                 if (typeof floorString === 'string') {
                   const parsed = parseFloorString(floorString);
 

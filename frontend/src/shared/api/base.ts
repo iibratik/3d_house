@@ -10,4 +10,5 @@ export const $api = axios.create({
     'Authorization': `Basic ${token}`,
     'Content-Type': 'application/json',
   },
+  withCredentials: true
 });
