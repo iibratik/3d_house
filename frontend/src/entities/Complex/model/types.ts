@@ -48,11 +48,12 @@ export interface Block {
     name: string;
 }
 export interface Apartament {
-    id: number;
+    id: number,
     blockId: number,
-    apartamentNumber: string,
+    apartmentNumber: string,
     floor: number,
-    typeId: number
+    typeId: number,
+    model: string;
 }
 export interface ApartmentType {
     id: number;

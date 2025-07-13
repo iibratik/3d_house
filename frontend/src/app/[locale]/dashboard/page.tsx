@@ -8,8 +8,9 @@ import { useParams } from 'next/navigation';
 import { Link, useRouter } from '@/i18n/navigation';
 import { Developer } from '@/entities/Developer/model/types';
 import { useDeveloperStore } from '@/entities/Developer/model/store';
-import { ComplexCard } from '@/entities/Complex';
+
 import ChartComponent, { TimeRange } from '@/widgets/Charts/ui/CommonComplexChart';
+import { DeveloperComplexCard } from '@/entities/Complex/ui/DeveloperComplexCard';
 
 export default function DeveloperPage() {
     const router = useRouter();
@@ -152,7 +153,7 @@ export default function DeveloperPage() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     {developerStore.developerComplexes.map((complex, index) => (
                                         <div key={complex.id} className="animate-fade-in">
-                                            <ComplexCard
+                                            <DeveloperComplexCard
                                                 complex={complex}
                                                 isAllowedToLoad={loadingCount < 3 && !loaded[index]}
                                                 setLoadingCount={setLoadingCount}

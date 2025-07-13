@@ -17,7 +17,7 @@ interface ComplexState {
     isLoading: boolean;
     error: string | null;
 
-
+    addNewApartament: (newApartament: Apartament) => void
     getBlockByComplexId: (complexId: number) => Promise<string>
     getFiltered: () => void;
     getFilterValues: () => void
@@ -39,7 +39,16 @@ export const useComplexStore = create<ComplexState>((set, get) => ({
     page: 0,
     pageSize: 6,
     setCurrentFloor: null,
-    
+
+
+    addNewApartament(newApart) {
+        try {
+            const response = complexApi.createApartament(newApart)
+        } catch (error) {
+            console.error(error);
+
+        }
+    },
     getFiltered: () => {
         const complexes = get().allComplexes
         const filters = get().currentFilters
@@ -203,7 +212,11 @@ export const useComplexStore = create<ComplexState>((set, get) => ({
             const apartaments = await complexApi.getApartamentById(blockId);
 
             if (Array.isArray(apartaments)) {
-                set({ currentApartaments: apartaments });
+                set((state) => {
+                    const all = [...state.currentApartaments, ...apartaments];
+                    const unique = Array.from(new Map(all.map(a => [a.id, a])).values());
+                    return { currentApartaments: unique };
+                });
                 return 'success';
             } else {
                 console.error('Некорректный ответ от API:', apartaments);

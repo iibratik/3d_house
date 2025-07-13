@@ -9,5 +9,6 @@ export const privateRoutes = [
     '/dashboard',
     '/profile',
     '/settings',
+    'developer/complexes'
 ];
 

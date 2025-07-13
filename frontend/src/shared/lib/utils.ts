@@ -90,3 +90,19 @@ export function parseFloorString(floorStr: string): { block: string; floor: stri
     floor: match[2],
   };
 }
+export function getRoomLabel(typeId: number): string {
+  switch (typeId) {
+    case 1:
+      return 'Студия';
+    case 2:
+      return '1 - комнатная';
+    case 3:
+      return '2 - комнатная';
+    case 4:
+      return '3 - комнатная';
+    case 5:
+      return '4 - комнатная';
+    default:
+      return `${typeId}`;
+  }
+}

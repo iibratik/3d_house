@@ -10,7 +10,7 @@ import {
   Calendar,
 } from 'lucide-react';
 import { Button } from '@/shared/ui/Button/Button';
-import { formatAddress, formatPrice, getVisibleAmenities, parseFloorString } from '@/shared/lib/utils';
+import { formatAddress, formatPrice, getRoomLabel, getVisibleAmenities, parseFloorString } from '@/shared/lib/utils';
 import { useComplexStore } from '@/entities/Complex/model/store';
 import { useDeveloperStore } from '@/entities/Developer/model/store';
 import { Link } from '@/i18n/navigation';
@@ -66,7 +66,7 @@ export default function ComplexPage() {
     async function fetchBlocks() {
 
       const blockResult = await getBlockByComplexId(Number(complexId))
-      console.log(blockResult);
+
 
       if (blockResult === 'success') {
         const updatedBlocks = useComplexStore.getState().currentBlocks
@@ -204,7 +204,7 @@ export default function ComplexPage() {
                     {currentApartaments.map((apt) => (
                       <div key={apt.id}>
                         <div
-                          className={`border rounded-lg p-4 ${apt.floor
+                          className={`border rounded-lg p-4  ${apt.floor
                             ? 'border-green-200 cursor-pointer bg-green-50 dark:bg-green-900/20 dark:border-green-800'
                             : 'border-gray-200 bg-gray-50 dark:bg-gray-700 dark:border-gray-600'
                             }`}
@@ -347,12 +347,18 @@ export default function ComplexPage() {
                   Доступные квартиры
                 </h2>
                 {loadedBlocks?.map((block) => {
-                  const blockApartaments = loadedApartaments
+                  // Квартиры, относящиеся к текущему блоку
+                  const blockApartaments = loadedApartaments.filter(
+                    (apt) => apt.blockId === block.id
+                  );
 
                   // Подсчёт количества квартир по typeId
-                  const typeCounts: Record<number, number> = {};
+                  const typeGroups = new Map<number, Apartament[]>();
                   blockApartaments.forEach((apt) => {
-                    typeCounts[apt.typeId] = (typeCounts[apt.typeId] || 0) + 1;
+                    if (!typeGroups.has(apt.typeId)) {
+                      typeGroups.set(apt.typeId, []);
+                    }
+                    typeGroups.get(apt.typeId)!.push(apt);
                   });
 
                   return (
@@ -367,116 +373,49 @@ export default function ComplexPage() {
                         </div>
                       ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                          {blockApartaments.map((apt) => {
-                            const sameTypeCount = typeCounts[apt.typeId] || 0;
+                          {Array.from(typeGroups.entries()).map(([typeId, apts]) => {
+                            const apt = apts[0]; // первая квартира с таким типом
+                            const count = apts.length;
 
                             return (
-                              <div key={apt.id}>
+                              <div key={typeId}>
                                 <div
-
                                   className={`border rounded-lg p-4 ${apt.floor
-                                    ? 'border-green-200 cursor-pointer  bg-green-50 dark:bg-green-900/20 dark:border-green-800'
+                                    ? 'border-green-200 cursor-pointer   bg-green-50 dark:bg-green-900/20 dark:border-green-800'
                                     : 'border-gray-200 bg-gray-50 dark:bg-gray-700 dark:border-gray-600'
                                     }`}
                                   onClick={() => {
-                                    setIsOpenApartModal(!isOpenApartModal)
+                                    setIsOpenApartModal(true);
                                     setSelectedApartment(apt);
                                   }}
                                 >
                                   <div className="flex justify-between items-start mb-2">
                                     <h4 className="font-semibold text-gray-900 dark:text-white">
-                                      {apt.typeId}-комн. <br />
+                                      {getRoomLabel(typeId)}
                                     </h4>
-                                    <span
-                                      className={`text-xs px-2 py-1 rounded ${apt.floor
-                                        ? 'bg-green-200 text-green-800 dark:bg-green-800 dark:text-green-200'
-                                        : 'bg-gray-200 text-gray-800 dark:bg-gray-600 dark:text-gray-300'
-                                        }`}
-                                    >
-                                      {/* {apt.available ? 'Доступна' : 'Продана'} */}
-                                    </span>
                                   </div>
 
                                   <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
-                                    <div>Этаж: {apt.floor}</div>
-                                    <div className="font-semibold text-gray-900 dark:text-white">
-                                      {/* {formatPrice(apt.price)} млн сум */}
-                                    </div>
+
                                     <div className="text-xs mt-2 text-gray-500 dark:text-gray-400">
-                                      Всего {apt.typeId}-комн. в блоке: {sameTypeCount}
+                                      Всего {getRoomLabel(typeId)} в блоке: {count}
                                     </div>
                                   </div>
                                 </div>
-                                {selectedApartment && isOpenApartModal && (
+
+                                {selectedApartment?.typeId === typeId && isOpenApartModal && (
                                   <Modal isOpen={isOpenApartModal} onClose={() => setIsOpenApartModal(false)}>
                                     <h2 className="text-xl font-bold mb-4">
-                                      {selectedApartment.typeId} - комнатная квартира
+                                      {typeId} - комнатная квартира
                                     </h2>
                                     <div className="apart-model w-[70vw] h-[60vh]">
-                                      {selectedApartment.typeId === 1 && (
-                                        <iframe
-                                          frameBorder="30"
-                                          allowFullScreen
-                                          width="100%"
-                                          height="100%"
-                                          mozallowfullscreen="true"
-                                          webkitallowfullscreen="true"
-                                          allow="autoplay; fullscreen; xr-spatial-tracking"
-                                          xr-spatial-tracking="true"
-                                          execution-while-out-of-viewport="true"
-                                          execution-while-not-rendered="true"
-                                          web-share="true"
-                                          src="https://sketchfab.com/models/cae2d96ede1d4112b1fd391099a43f77/embed?autostart=1&ui_hint=0&dnt=1"
-                                        />
-                                      )}
-                                      {selectedApartment.typeId === 2 && (
-                                        <iframe
-                                          frameBorder="30"
-                                          allowFullScreen
-                                          width="100%"
-                                          height="100%"
-                                          mozallowfullscreen="true"
-                                          webkitallowfullscreen="true"
-                                          allow="autoplay; fullscreen; xr-spatial-tracking"
-                                          xr-spatial-tracking="true"
-                                          execution-while-out-of-viewport="true"
-                                          execution-while-not-rendered="true"
-                                          web-share="true"
-                                          src="https://sketchfab.com/models/bed4b9094fd14e838039177ff68e3ce9/embed"
-                                        />
-                                      )}
-                                      {selectedApartment.typeId === 3 && (
-                                        <iframe
-                                          frameBorder="30"
-                                          allowFullScreen
-                                          width="100%"
-                                          height="100%"
-                                          mozallowfullscreen="true"
-                                          webkitallowfullscreen="true"
-                                          allow="autoplay; fullscreen; xr-spatial-tracking"
-                                          xr-spatial-tracking="true"
-                                          execution-while-out-of-viewport="true"
-                                          execution-while-not-rendered="true"
-                                          web-share="true"
-                                          src="https://sketchfab.com/models/c7e49702e77743e8948fe66b5969a1ab/embed"
-                                        />
-                                      )}
-                                      {selectedApartment.typeId === 4 && (
-                                        <iframe
-                                          frameBorder="30"
-                                          allowFullScreen
-                                          width="100%"
-                                          height="100%"
-                                          mozallowfullscreen="true"
-                                          webkitallowfullscreen="true"
-                                          allow="autoplay; fullscreen; xr-spatial-tracking"
-                                          xr-spatial-tracking="true"
-                                          execution-while-out-of-viewport="true"
-                                          execution-while-not-rendered="true"
-                                          web-share="true"
-                                          src="https://sketchfab.com/models/bed4b9094fd14e838039177ff68e3ce9/embed"
-                                        />
-                                      )}
+                                      <iframe
+                                        frameBorder="0"
+                                        allowFullScreen
+                                        width="100%"
+                                        height="100%"
+                                        src={apt.model ?? ''}
+                                      />
                                     </div>
                                     <div className="flex justify-end gap-3">
                                       <Button
@@ -496,6 +435,7 @@ export default function ComplexPage() {
                     </div>
                   );
                 })}
+
               </div>
             </div>
 
@@ -508,25 +448,6 @@ export default function ComplexPage() {
                     Застройщик
                   </h3>
                   <DeveloperCard developer={loadedDeveloper} />
-                  {/* <div
-                    className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-3 rounded-lg transition-colors"
-                  >
-                    {loadedDeveloper.logo && (
-                      <img
-                        src={loadedDeveloper.logo}
-                        alt={loadedDeveloper.name}
-                        className="w-12 h-12 rounded-lg object-cover"
-                      />
-                    )}
-                    <div>
-                      <div className="font-medium text-gray-900 dark:text-white">
-                        {loadedDeveloper.name}
-                      </div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400">
-                        Посмотреть профиль
-                      </div>
-                    </div>
-                  </div> */}
                 </div>
               )}
 

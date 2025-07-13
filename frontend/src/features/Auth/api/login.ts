@@ -24,7 +24,7 @@ export async function loginRequest(username: string, password: string): Promise<
             throw new Error('Ошибка авторизации');
         }
 
-        console.log('🟢 Login success:', response.data);
+
         return response.data;
     } catch (err) {
         console.error('🔴 Ошибка при логине', err);

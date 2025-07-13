@@ -62,7 +62,7 @@ export function ModelPreViewer({
         } className="flex items-end mb-4 justify-center h-full pb-3" >
           <Button
             onClick={() => {
-              console.log(imageUrl);
+
 
               setLoadingCount((prev) => prev + 1);
               setActiveModelIndex(index);

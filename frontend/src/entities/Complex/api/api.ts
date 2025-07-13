@@ -21,11 +21,20 @@ export const complexApi = {
     throw new Error(`Complex with id=${complexId} not found`);
   },
   async getBlocksByComplexId(complexId: number): Promise<Block[]> {
-    const response = await $api.get<Block[]>(`apar/get/block/id?id=${complexId}`)
-    if (Array.isArray(response.data) && response.data.length > 0) {
-      return response.data;
+    try {
+      const response = await $api.get<Block[]>(`apar/get/block/id?id=${complexId}`);
+
+      if (Array.isArray(response.data) && response.data.length > 0) {
+        return response.data;
+      }
+
+      // Логируем как предупреждение, если массив пуст
+      console.warn(`❗️No blocks found for complexId=${complexId}`);
+      return [];
+    } catch (error) {
+      console.error(`🔥 Ошибка при получении блоков для complexId=${complexId}:`, error);
+      return []; // Возвращаем пустой массив, чтобы не ронять приложение
     }
-    throw new Error(`Block with id=${complexId} not found`);
   },
   async getApartamentById(blockId: number): Promise<Apartament[]> {
     const response = await $api.get<Apartament[]>(`/apar/get/apartment?blockId=${blockId}`);
@@ -37,5 +46,13 @@ export const complexApi = {
     }
 
     return response.data;
+  },
+  async createApartament(apartament: Apartament): Promise<void> {
+
+    console.log(JSON.stringify(apartament));
+
+    const response = await $api.post<string>(`/apar/add/apartment`, JSON.stringify(apartament));
+    console.log(response);
+
   }
 };

@@ -2,6 +2,7 @@
 import React from 'react';
 import { Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { Link } from '@/i18n/navigation';
 export const Navigation: React.FC = () => {
   const router = useRouter()
   return (
@@ -29,12 +30,12 @@ export const Navigation: React.FC = () => {
           </div>
 
           <div className="hidden md:flex items-center space-x-6">
-            <a href="#" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors">
+            <Link href="/" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors">
               Новостройки
-            </a>
-            <a href="#" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors">
+            </Link>
+            {/* <a href="#" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors">
               Карта
-            </a>
+            </a> */}
             <a href="#" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors">
               О нас
             </a>

@@ -18,7 +18,7 @@ export function LoginForm() {
         try {
             await login(inputUsername, inputPassword);
             const redirect = searchParams.get('from') || '/dashboard';
-            console.log('redirect:', redirect);
+            
             router.push(redirect);
         } catch {
 
