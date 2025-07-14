@@ -2,6 +2,7 @@
 import { Building2 } from "lucide-react";
 import { DeveloperProps, } from '../model/types';
 import { useRouter } from 'next/navigation';
+import Image from "next/image";
 
 export function DeveloperCard({ developer }: DeveloperProps) {
     const router = useRouter()
@@ -18,7 +19,7 @@ export function DeveloperCard({ developer }: DeveloperProps) {
             >
                 {developer ? (
                     <>
-                        <img
+                        <Image
                             src={developer.logo}
                             alt={developer.name || 'Логотип застройщика'}
                             width={32}

@@ -11,6 +11,7 @@ import { useDeveloperStore } from '@/entities/Developer/model/store';
 
 import ChartComponent, { TimeRange } from '@/widgets/Charts/ui/CommonComplexChart';
 import { DeveloperComplexCard } from '@/entities/Complex/ui/DeveloperComplexCard';
+import Image from 'next/image';
 
 export default function DeveloperPage() {
     const router = useRouter();
@@ -106,7 +107,7 @@ export default function DeveloperPage() {
                     </div>
 
                     <div className="flex lg:flex-row flex-col lg:items-start items-center text-center gap-3 justify-center space-x-6">
-                        <img
+                        <Image
                             src={developer.logo}
                             width="200"
                             height="200"

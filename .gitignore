@@ -11,3 +11,4 @@
 
 # Docker
 docker/db_data/
+node_modules

@@ -1,3 +1,3 @@
 
 export { ComplexCard } from './ui/ComplexCard';
-export type { Complex, Location, AreaRange, ComplexStatus } from './model/types';
+export type { Complex, Location, ComplexStatus } from './model/types';

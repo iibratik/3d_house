@@ -10,6 +10,7 @@ import { Link, useRouter } from '@/i18n/navigation';
 import { Developer } from '../../../../entities/Developer/model/types';
 import { useDeveloperStore } from '@/entities/Developer/model/store';
 import { ComplexCard } from '@/entities/Complex';
+import Image from 'next/image';
 
 
 
@@ -96,7 +97,7 @@ export default function DeveloperPage() {
                     </div>
 
                     <div className="flex lg:flex-row flex-col lg:items-start items-center text-center gap-3 justify-center space-x-6">
-                        <img
+                        <Image
                             src={developer.logo}
                             width='200'
                             height='200'

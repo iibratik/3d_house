@@ -1,4 +1,3 @@
-// components/ModelViewer.tsx
 'use client';
 
 import React, { FC, Suspense, useEffect, useRef, useState } from 'react';
@@ -6,17 +5,16 @@ import { Canvas } from '@react-three/fiber';
 import { Environment, Html, useProgress, CameraControls as DreiCameraControls, CameraControlsImpl } from '@react-three/drei';
 import { ModelViewerController } from './ModelViewerController';
 
-interface floorProps {
-    block: string,
-    floor: string
+export interface floorProps {
+    block: string;
+    floor: string;
 }
 
 interface Props {
     modelUrl?: string;
     className?: string;
     showEnvironment?: boolean;
-    /** Передаём колбэк из родителя */
-    onFloorChange: (floorName: floorProps | null) => void;
+    onFloorChange: (floor: floorProps | null) => void;
 }
 
 const CanvasLoader: FC = () => {

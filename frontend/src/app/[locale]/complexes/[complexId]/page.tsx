@@ -10,7 +10,7 @@ import {
   Calendar,
 } from 'lucide-react';
 import { Button } from '@/shared/ui/Button/Button';
-import { formatAddress, formatPrice, getRoomLabel, getVisibleAmenities, parseFloorString } from '@/shared/lib/utils';
+import { formatAddress, formatPrice, getRoomLabel, getVisibleAmenities, } from '@/shared/lib/utils';
 import { useComplexStore } from '@/entities/Complex/model/store';
 import { useDeveloperStore } from '@/entities/Developer/model/store';
 import { Link } from '@/i18n/navigation';
@@ -157,31 +157,22 @@ export default function ComplexPage() {
             <ModelViewer
               modelUrl="/3dModels/Building/Building.glb"
               className="h-full"
-              onFloorChange={(floorString) => {
-                if (typeof floorString === 'string') {
-                  const parsed = parseFloorString(floorString);
-
-                  if (!parsed) {
-                    console.warn('Не удалось разобрать имя блока и этажа:', floorString);
-                    setSelectedFloorInfo(null);
-                    setCurrentApartaments([]);
-                    return;
-                  }
-
-                  const blk = loadedBlocks?.find(b => b.name === parsed.block);
+              onFloorChange={(info) => {
+                if (info) {
+                  const blk = loadedBlocks?.find(b => b.name === info.block);
                   if (!blk) {
-                    console.warn(`Блок "${parsed.block}" не найден среди loadedBlocks`);
-                    setSelectedFloorInfo(null);
+                    console.warn(`Блок "${info.block}" не найден среди loadedBlocks`);
+                    setSelectedFloorInfo(info);
                     setCurrentApartaments([]);
                     return;
                   }
 
-                  const floorNum = Number(parsed.floor);
+                  const floorNum = Number(info.floor);
                   const filtered = loadedApartaments.filter(
                     apt => apt.blockId === blk.id && apt.floor === floorNum
                   );
 
-                  setSelectedFloorInfo(parsed);
+                  setSelectedFloorInfo(info);
                   setCurrentApartaments(filtered);
                 } else {
                   setSelectedFloorInfo(null);

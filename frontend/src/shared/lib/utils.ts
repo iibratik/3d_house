@@ -2,7 +2,7 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { AMENITY_LABELS } from "./amenities";
-import { Apartament, ApartmentType, Block } from "@/entities/Complex/model/types";
+import {  ApartmentType,  } from "@/entities/Complex/model/types";
 
 
 

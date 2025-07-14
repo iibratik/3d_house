@@ -1,0 +1,19 @@
+FROM node:18-alpine
+
+WORKDIR /app
+
+# 1. Установка зависимостей
+COPY frontend/package*.json ./
+RUN npm install --omit=dev
+
+# 2. Копируем необходимые файлы
+COPY frontend/.next .next
+COPY frontend/public public
+COPY frontend/next.config.ts .
+COPY frontend/tsconfig.json .
+# COPY frontend/pages ./pages
+# COPY frontend/app ./app
+# COPY frontend/components ./components
+
+EXPOSE 7000
+CMD ["npx", "next", "start", "-p", "7000"]

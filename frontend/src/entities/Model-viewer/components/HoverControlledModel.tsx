@@ -1,10 +1,10 @@
 'use client';
 
-import { useGLTF } from '@react-three/drei';
-import { useRef, useEffect, useState, useMemo } from 'react';
-import { useFrame, useThree } from '@react-three/fiber';
+import React, { Suspense, useRef, useEffect } from 'react';
+import { useThree, useFrame, useLoader } from '@react-three/fiber';
+import { GLTFLoader, DRACOLoader, KTX2Loader } from 'three-stdlib';
 import * as THREE from 'three';
-import { KTX2Loader, } from 'three-stdlib'
+import { Html, useProgress } from '@react-three/drei';
 
 interface Props {
   url: string;
@@ -12,120 +12,136 @@ interface Props {
   onLoaded?: () => void;
 }
 
-const gltfCache = new Map<string, THREE.Group>();
+function Loader() {
+  const { progress } = useProgress();
+  return (
+    <Html center>
+      <div style={{ color: 'white', fontSize: '1.2rem' }}>
+        Загрузка... {Math.round(progress)}%
+      </div>
+    </Html>
+  );
+}
 
-export function HoverControlledModel({ url, onError, onLoaded }: Props) {
+export function HoverControlledModel({ url, onLoaded }: Props) {
   const groupRef = useRef<THREE.Group>(null);
-  const [targetRotation, setTargetRotation] = useState({ x: 0, y: 0 });
-  const [scaleFactor, setScaleFactor] = useState(1);
-  const gl = useThree((state) => state.gl);
+  const targetRotation = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const currentRotation = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const targetScale = useRef<number>(1);
+  const currentScale = useRef<number>(1);
+  const { gl } = useThree();
 
-  const { scene } = useGLTF(url, undefined, undefined, (loader) => {
-    const ktx2 = new KTX2Loader()
-      .setTranscoderPath('https://cdn.jsdelivr.net/gh/pmndrs/drei-assets/basis/')
-    ktx2.detectSupport(gl)
-    loader.setKTX2Loader(ktx2)
-  });
-
-  const clonedScene = useMemo(() => {
-    if (!scene) return null;
-
-    if (!gltfCache.has(url)) {
-      gltfCache.set(url, scene.clone(true));
+  const gltf = useLoader(
+    GLTFLoader,
+    url,
+    (loader) => {
+      const ktx2 = new KTX2Loader()
+        .setTranscoderPath('https://cdn.jsdelivr.net/gh/pmndrs/drei-assets/basis/')
+        .detectSupport(gl);
+      const draco = new DRACOLoader().setDecoderPath(
+        'https://www.gstatic.com/draco/v1/decoders/'
+      );
+      loader.setKTX2Loader(ktx2);
+      loader.setDRACOLoader(draco);
     }
-    return gltfCache.get(url)!.clone(true);
-  }, [scene, url]);
+  );
+
+  const scene = gltf.scene.clone(true);
 
   useEffect(() => {
-    if (clonedScene && onLoaded) {
-      onLoaded();
-    } else if (!clonedScene && onError) {
-      onError();
-    }
-  }, [clonedScene, onLoaded, onError]);
+    scene.traverse((child: THREE.Object3D) => {
+      if ((child as THREE.Mesh).isMesh) {
+        const mesh = child as THREE.Mesh;
+        mesh.castShadow = false;
+        mesh.receiveShadow = false;
+        mesh.frustumCulled = true;
+      }
+    });
 
-  // Обработка вращения при наведении
+    onLoaded?.();
+  }, [scene, onLoaded]);
+
+  // Наведение мыши
   useEffect(() => {
     const canvas = gl.domElement;
-
-    const handleMouseMove = (event: MouseEvent) => {
+    const handle = (event: MouseEvent) => {
       const rect = canvas.getBoundingClientRect();
-      const isInside =
+      const inside =
         event.clientX >= rect.left &&
         event.clientX <= rect.right &&
         event.clientY >= rect.top &&
         event.clientY <= rect.bottom;
 
-      if (isInside) {
-        const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-        setTargetRotation({ x: 0, y: x * 2.5 });
-      }
-    };
+      if (!inside) return;
 
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+      const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      targetRotation.current.y = x * 2.5;
+    };
+    window.addEventListener('mousemove', handle);
+    return () => window.removeEventListener('mousemove', handle);
   }, [gl]);
 
-  // Обработка зума при прокрутке
+  // Зум
   useEffect(() => {
     const canvas = gl.domElement;
-
-    const handleWheel = (event: WheelEvent) => {
+    const handle = (event: WheelEvent) => {
       const rect = canvas.getBoundingClientRect();
-      const isInside =
+      const inside =
         event.clientX >= rect.left &&
         event.clientX <= rect.right &&
         event.clientY >= rect.top &&
         event.clientY <= rect.bottom;
 
-      if (isInside) {
-        event.preventDefault(); // Блокирует прокрутку страницы
+      if (!inside) return;
 
-        setScaleFactor(prev => {
-          const MIN_SCALE = 1;
-          const MAX_SCALE = 2;
-          const SCALE_SPEED = 0.002;
-          const next = THREE.MathUtils.clamp(
-            prev - event.deltaY * SCALE_SPEED,
-            MIN_SCALE,
-            MAX_SCALE
-          );
-          return next;
-        });
-      }
+      event.preventDefault();
+
+      const next = THREE.MathUtils.clamp(
+        targetScale.current - event.deltaY * 0.002,
+        1,
+        2
+      );
+      targetScale.current = next;
     };
 
-    // Добавим и к canvas, и к window для надёжности
-    canvas.addEventListener('wheel', handleWheel, { passive: false });
-    window.addEventListener('wheel', handleWheel, { passive: false });
-
-    return () => {
-      canvas.removeEventListener('wheel', handleWheel);
-      window.removeEventListener('wheel', handleWheel);
-    };
+    canvas.addEventListener('wheel', handle, { passive: false });
+    return () => canvas.removeEventListener('wheel', handle);
   }, [gl]);
+
+  // Плавная анимация
   useFrame(() => {
     if (groupRef.current) {
-      groupRef.current.rotation.x = THREE.MathUtils.lerp(
-        groupRef.current.rotation.x,
-        targetRotation.x,
+      currentRotation.current.x = THREE.MathUtils.lerp(
+        currentRotation.current.x,
+        targetRotation.current.x,
         0.1
       );
-      groupRef.current.rotation.y = THREE.MathUtils.lerp(
-        groupRef.current.rotation.y,
-        targetRotation.y,
+      currentRotation.current.y = THREE.MathUtils.lerp(
+        currentRotation.current.y,
+        targetRotation.current.y,
+        0.1
+      );
+      currentScale.current = THREE.MathUtils.lerp(
+        currentScale.current,
+        targetScale.current,
         0.1
       );
 
-      groupRef.current.scale.setScalar(scaleFactor);
+      groupRef.current.rotation.set(
+        currentRotation.current.x,
+        currentRotation.current.y,
+        0
+      );
+
+      groupRef.current.scale.setScalar(currentScale.current);
     }
   });
 
-  if (!clonedScene) return null;
-
   return (
-    <group ref={groupRef}>
-      <primitive object={clonedScene} />
-    </group>
+    <Suspense fallback={<Loader />}>
+      <group ref={groupRef}>
+        <primitive object={scene} />
+      </group>
+    </Suspense>
   );
 }

@@ -313,6 +313,7 @@ export default function ComplexPage() {
                                                                                 src={apt.model ?? ''}
                                                                             />
                                                                         </div>
+
                                                                         <div className="flex justify-end gap-3">
                                                                             <Button
                                                                                 className="px-4 my-2 py-2 bg-blue-600 rounded"
@@ -344,8 +345,7 @@ export default function ComplexPage() {
                                     Добавить квартиру
                                 </h3>
                                 <div className="space-y-4">
-                                    <form action="#" onSubmit={(e) => {
-
+                                    <form action="#" onSubmit={() => {
                                         addNewApartament(addingApartament)
                                     }}>
                                         <select

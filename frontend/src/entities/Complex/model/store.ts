@@ -17,7 +17,7 @@ interface ComplexState {
     isLoading: boolean;
     error: string | null;
 
-    addNewApartament: (newApartament: Apartament) => void
+    addNewApartament: (newApartament: Apartament) => Promise<string>
     getBlockByComplexId: (complexId: number) => Promise<string>
     getFiltered: () => void;
     getFilterValues: () => void
@@ -41,10 +41,12 @@ export const useComplexStore = create<ComplexState>((set, get) => ({
     setCurrentFloor: null,
 
 
-    addNewApartament(newApart) {
+    async addNewApartament(newApart) {
         try {
-            const response = complexApi.createApartament(newApart)
+            const response = await complexApi.createApartament(newApart)
+            return response
         } catch (error) {
+            return "fail"
             console.error(error);
 
         }

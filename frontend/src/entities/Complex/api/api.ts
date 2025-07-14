@@ -47,12 +47,11 @@ export const complexApi = {
 
     return response.data;
   },
-  async createApartament(apartament: Apartament): Promise<void> {
+  async createApartament(apartament: Apartament): Promise<string> {
 
-    console.log(JSON.stringify(apartament));
 
     const response = await $api.post<string>(`/apar/add/apartment`, JSON.stringify(apartament));
-    console.log(response);
+    return response.data
 
   }
 };

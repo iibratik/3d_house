@@ -1,4 +1,3 @@
-// components/ModelViewerController.tsx
 'use client';
 
 import React, { useRef, useEffect, useState, useMemo } from 'react';
@@ -6,13 +5,13 @@ import { useFrame, useThree, ThreeEvent } from '@react-three/fiber';
 import { useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
 import { KTX2Loader } from 'three-stdlib';
+import type { floorProps } from './ModelViewer'; // 👈 импорт нужного типа
 
 interface Props {
     url: string;
     onError?: () => void;
     onLoaded?: () => void;
-    /** новый проп */
-    onFloorChange?: (floorName: string | null) => void;
+    onFloorChange?: (floorName: floorProps | null) => void; // ✅ правильно указанный тип
 }
 
 export function ModelViewerController({
@@ -91,8 +90,10 @@ export function ModelViewerController({
         e.stopPropagation();
         setDragging(true);
         setLastX(e.clientX);
-        e.target.setPointerCapture(e.pointerId);
+        const target = e.target as HTMLElement;
+        target.setPointerCapture?.(e.pointerId);
     };
+
     const onPointerMove = (e: ThreeEvent<PointerEvent>) => {
         if (!dragging || lastX === null) return;
         e.stopPropagation();
@@ -100,11 +101,13 @@ export function ModelViewerController({
         setTargetY(prev => prev + dx);
         setLastX(e.clientX);
     };
+
     const onPointerUp = (e: ThreeEvent<PointerEvent>) => {
         e.stopPropagation();
         setDragging(false);
         setLastX(null);
-        e.target.releasePointerCapture(e.pointerId);
+        const target = e.target as HTMLElement;
+        target.releasePointerCapture?.(e.pointerId);
     };
 
     const onClick = (e: ThreeEvent<PointerEvent>) => {
@@ -120,7 +123,6 @@ export function ModelViewerController({
 
         const hits = raycaster.intersectObject(groupRef.current, true);
         if (hits.length === 0) {
-            // Сброс
             if (activeRef.current) {
                 activeRef.current.children.forEach(child => {
                     const orig = originalMaterials.current.get(child.uuid);
@@ -131,7 +133,7 @@ export function ModelViewerController({
             }
             activeRef.current = null;
             animating.current = false;
-            onFloorChange?.(null);
+            onFloorChange?.(null); // сброс
             return;
         }
 
@@ -141,12 +143,10 @@ export function ModelViewerController({
         }
         const floorGrp = obj.parent as THREE.Group;
 
-        if (!/^[A-Z]Floor\d+$/.test(floorGrp.name)) {
-            // не наш формат
-            return;
-        }
+        const name = floorGrp.name; // e.g., "AFloor3"
+        if (!/^[A-Z]Floor\d+$/.test(name)) return;
 
-        // Сброс предыдущей подсветки
+        // подсветка
         if (activeRef.current) {
             activeRef.current.children.forEach(child => {
                 const orig = originalMaterials.current.get(child.uuid);
@@ -156,12 +156,12 @@ export function ModelViewerController({
             });
         }
 
-        // Подсветка нового
         floorGrp.children.forEach(child => {
             if ((child as THREE.Mesh).material) {
                 const mesh = child as THREE.Mesh;
-                if (!originalMaterials.current.has(mesh.uuid)) {
-                    originalMaterials.current.set(mesh.uuid, mesh.material.clone());
+                const material = mesh.material;
+                if (!originalMaterials.current.has(mesh.uuid) && !Array.isArray(material)) {
+                    originalMaterials.current.set(mesh.uuid, material.clone());
                 }
                 mesh.material = originalMaterials.current.get(mesh.uuid)!;
                 const mt = mesh.material as THREE.MeshStandardMaterial;
@@ -173,7 +173,16 @@ export function ModelViewerController({
         activeRef.current = floorGrp;
         animating.current = true;
 
-        onFloorChange?.(floorGrp.name);
+        const match = name.match(/^([A-Z])Floor(\d+)$/);
+        if (match) {
+            const parsed = {
+                block: match[1],
+                floor: match[2],
+            };
+            onFloorChange?.(parsed); // ✅ передаём правильный объект
+        } else {
+            onFloorChange?.(null);
+        }
     };
 
     if (!centeredScene) return null;

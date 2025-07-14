@@ -2,6 +2,9 @@ import { NextConfig } from 'next';
 import createNextIntlPlugin from 'next-intl/plugin';
 
 const nextConfig: NextConfig = {
+    images: {
+        domains: ['images.icon-icons.com'], // ✅ Разрешаем внешний домен
+    },
     async rewrites() {
         return [
             {
