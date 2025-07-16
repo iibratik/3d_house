@@ -1,21 +1,20 @@
 import { NextConfig } from 'next';
-import createNextIntlPlugin from 'next-intl/plugin';
 
 const nextConfig: NextConfig = {
     images: {
-        domains: ['images.icon-icons.com'], // ✅ Разрешаем внешний домен
+        domains: ['images.icon-icons.com'], // Разрешаем загрузку изображений с внешнего домена
     },
     async rewrites() {
         return [
             {
                 source: '/api/backend/:path*',
-                destination: 'http://localhost:8000/:path*' // Spring API
+                destination: 'http://localhost:8000/:path*' // Прокси на Spring Boot API
             }
         ];
-    }
+    },
+    assetPrefix: '/',     // Важный параметр: относительные пути
+    basePath: '',         // Сайт будет доступен на https://3devor.uz/
+    output: 'standalone', // Для Docker или продакшн-сборки
 };
 
-const withNextIntl = createNextIntlPlugin(
-
-);
-export default withNextIntl(nextConfig);
+export default nextConfig;
