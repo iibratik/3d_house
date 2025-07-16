@@ -5,7 +5,13 @@ import { privateRoutes } from './app/routes';
 const supportedLocales = ['ru', 'en'];
 const defaultLocale = 'ru';
 
-
+// 🔒 Пути, которые никогда не должны попадать во фронт
+const blockedPaths = [
+    '/api/backend',
+    '/backend',
+    '/swagger-ui',
+    '/v3/api-docs',
+];
 
 // Получить путь без локали: /ru/dashboard → /dashboard
 function stripLocale(pathname: string): string {
@@ -23,6 +29,11 @@ function hasLocale(pathname: string): boolean {
 
 export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
+
+    // 🚫 Полная защита: заблокировать системные backend-адреса
+    if (blockedPaths.some((prefix) => pathname.startsWith(prefix))) {
+        return new Response('Access Denied', { status: 403 });
+    }
 
     // 🚫 Не трогаем статические файлы и API
     const isStatic = pathname.match(/^\/(_next|favicon.ico|api|3dModels|static|images|fonts)\b/);
@@ -51,6 +62,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
 }
 
+// ❗ Обрабатываем только HTML-страницы
 export const config = {
-    matcher: ['/((?!.*\\.).*)'], // только HTML-пути, исключает .js, .png и т.п.
+    matcher: ['/((?!.*\\.).*)'], // исключает файлы .js, .png и т.п.
 };
