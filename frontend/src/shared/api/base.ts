@@ -5,10 +5,10 @@ const password = 'chuchmek';
 const token = btoa(`${username}:${password}`); // base64 кодировка
 
 export const $api = axios.create({
-  baseURL: 'http://localhost:8000/', // измени на нужный порт, у тебя был 8080
+  baseURL: '/api/back', // ✅ точно как в Swagger: /api/back
   headers: {
-    'Authorization': `Basic ${token}`,
-    'Content-Type': 'application/json',
+    'Authorization': `Basic ${token}`,       // 🔐 Basic Auth
+    'Content-Type': 'application/json',      // 📦 JSON
   },
-  withCredentials: true
+  withCredentials: true // ✅ если backend работает с куками или сессиями
 });

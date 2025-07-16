@@ -8,8 +8,8 @@ const nextConfig: NextConfig = {
     async rewrites() {
         return [
             {
-                source: '/api/backend/:path*',
-                destination: 'http://localhost:8000/:path*' // Spring API
+                source: '/api/back/:path*',
+                destination: 'http://localhost:8000/api/back/:path*'
             }
         ];
     }
