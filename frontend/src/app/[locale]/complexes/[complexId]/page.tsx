@@ -44,6 +44,7 @@ export default function ComplexPage() {
 
 
   useEffect(() => {
+    window.scrollTo(0, 0);
     async function fetchComplex() {
       setLoadingComplex(true);
       const result = await getComplexById(Number(complexId));
@@ -367,7 +368,6 @@ export default function ComplexPage() {
                           {Array.from(typeGroups.entries()).map(([typeId, apts]) => {
                             const apt = apts[0]; // первая квартира с таким типом
                             const count = apts.length;
-
                             return (
                               <div key={typeId}>
                                 <div
@@ -376,6 +376,8 @@ export default function ComplexPage() {
                                     : 'border-gray-200 bg-gray-50 dark:bg-gray-700 dark:border-gray-600'
                                     }`}
                                   onClick={() => {
+                                    console.log(apt);
+
                                     setIsOpenApartModal(true);
                                     setSelectedApartment(apt);
                                   }}

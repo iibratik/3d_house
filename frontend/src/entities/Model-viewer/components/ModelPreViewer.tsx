@@ -72,7 +72,8 @@ export function ModelPreViewer({
           </Button>
         </div>
       ) : modelUrl ? (
-        <Canvas camera={{ position: new THREE.Vector3(10, 7, 5), fov: 50 }}>
+
+        <Canvas style={{ pointerEvents: 'none' }} camera={{ position: new THREE.Vector3(10, 7, 5), fov: 50 }} gl={{ preserveDrawingBuffer: false }}>
           <ambientLight intensity={0.4} />
           <directionalLight position={[10, 10, 5]} intensity={0.8} />
           <directionalLight position={[-10, -10, -5]} intensity={0.3} />
@@ -88,6 +89,7 @@ export function ModelPreViewer({
             />
           </Suspense>
         </Canvas>
+
       ) : (
         <div className="flex items-center justify-center h-full text-gray-400 text-sm">
           Модель не указана

@@ -87,7 +87,7 @@ export function ModelViewerController({
     });
 
     const onPointerDown = (e: ThreeEvent<PointerEvent>) => {
-        e.stopPropagation();
+
         setDragging(true);
         setLastX(e.clientX);
         const target = e.target as HTMLElement;
@@ -96,14 +96,14 @@ export function ModelViewerController({
 
     const onPointerMove = (e: ThreeEvent<PointerEvent>) => {
         if (!dragging || lastX === null) return;
-        e.stopPropagation();
+
         const dx = (e.clientX - lastX) / 200;
         setTargetY(prev => prev + dx);
         setLastX(e.clientX);
     };
 
     const onPointerUp = (e: ThreeEvent<PointerEvent>) => {
-        e.stopPropagation();
+
         setDragging(false);
         setLastX(null);
         const target = e.target as HTMLElement;
@@ -111,7 +111,7 @@ export function ModelViewerController({
     };
 
     const onClick = (e: ThreeEvent<PointerEvent>) => {
-        e.stopPropagation();
+
         if (!groupRef.current) return;
 
         const rect = gl.domElement.getBoundingClientRect();
