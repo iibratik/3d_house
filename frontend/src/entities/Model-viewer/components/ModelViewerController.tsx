@@ -22,6 +22,7 @@ export function ModelViewerController({
 }: Props) {
     const groupRef = useRef<THREE.Group>(null);
     const { gl, camera } = useThree();
+    const rotationSpeed = useRef(0);
 
     const raycaster = useMemo(() => new THREE.Raycaster(), []);
     const mouse = useRef(new THREE.Vector2());
@@ -30,7 +31,6 @@ export function ModelViewerController({
     const originalMaterials = useRef<Map<string, THREE.Material>>(new Map());
     const animating = useRef(false);
 
-    const [targetY, setTargetY] = useState(0);
     const [dragging, setDragging] = useState(false);
     const [lastX, setLastX] = useState<number | null>(null);
 
@@ -68,17 +68,22 @@ export function ModelViewerController({
         if (!centeredScene) onError?.();
     }, [centeredScene, onLoaded, onError]);
 
-    useFrame(() => {
+    useFrame((_, delta) => {
         if (groupRef.current) {
-            groupRef.current.rotation.y = THREE.MathUtils.lerp(
-                groupRef.current.rotation.y,
-                targetY,
-                0.1
-            );
+            // Применяем скорость к вращению
+            groupRef.current.rotation.y += rotationSpeed.current * delta * 30;
+
+            // Плавное замедление (damping)
+            rotationSpeed.current *= 0.9;
+            if (Math.abs(rotationSpeed.current) < 0.0001) {
+                rotationSpeed.current = 0;
+            }
         }
+
+        // Эффект пульсации при выделении
         if (animating.current && activeRef.current) {
             const t = (Date.now() % 1000) / 1000;
-            const intensity = 0.5 + 0.5 * Math.sin(t * Math.PI * 2);
+            const intensity = 0.1 + 0.1 * Math.sin(t * Math.PI * 2);
             activeRef.current.children.forEach(child => {
                 const mat = (child as THREE.Mesh).material as THREE.MeshStandardMaterial;
                 if (mat) mat.emissiveIntensity = intensity;
@@ -93,12 +98,11 @@ export function ModelViewerController({
         const target = e.target as HTMLElement;
         target.setPointerCapture?.(e.pointerId);
     };
-
     const onPointerMove = (e: ThreeEvent<PointerEvent>) => {
         if (!dragging || lastX === null) return;
 
-        const dx = (e.clientX - lastX) / 200;
-        setTargetY(prev => prev + dx);
+        const dx = (e.clientX - lastX);
+        rotationSpeed.current = dx * 0.005; // чувствительность ниже — плавнее
         setLastX(e.clientX);
     };
 

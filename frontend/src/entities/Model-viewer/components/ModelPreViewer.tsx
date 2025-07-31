@@ -99,7 +99,7 @@ export function ModelPreViewer({
       {isActive && (
         <>
           <div className="absolute bottom-4 left-4 text-xs text-gray-500 bg-white/80 px-2 py-1 rounded z-10">
-            Наведите мышь для поворота • Прокрутите для масштабирования
+            Наведите мышь для поворота • Прокрутите для масштабирования {modelUrl}
           </div>
           <button
             onClick={() => setActiveModelIndex(null)}
