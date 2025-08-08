@@ -407,7 +407,7 @@ export default function ComplexPage() {
                                                         addingApartament.typeId = 5;
                                                         break;
                                                     default:
-                                                        console.warn("Неверное значение блока");
+
                                                         break;
                                                 }
                                             }}

@@ -61,7 +61,7 @@ export function HoverControlledModel({ url, onLoaded }: Props) {
     onLoaded?.();
   }, [scene, onLoaded]);
 
-  // Наведение мыши
+  // ✅ Мышь (десктоп)
   useEffect(() => {
     const canvas = gl.domElement;
     const handle = (event: MouseEvent) => {
@@ -77,12 +77,52 @@ export function HoverControlledModel({ url, onLoaded }: Props) {
       const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
       targetRotation.current.y = x * 2.5;
     };
+
     window.addEventListener('mousemove', handle);
     return () => window.removeEventListener('mousemove', handle);
   }, [gl]);
 
-  // Зум
+  // ✅ Свайп (мобильные устройства)
   useEffect(() => {
+    const canvas = gl.domElement;
+    let lastTouchX: number | null = null;
+
+    const handleTouchStart = (event: TouchEvent) => {
+      if (event.touches.length === 1) {
+        lastTouchX = event.touches[0].clientX;
+      }
+    };
+
+    const handleTouchMove = (event: TouchEvent) => {
+      if (event.touches.length === 1 && lastTouchX !== null) {
+        const currentX = event.touches[0].clientX;
+        const deltaX = currentX - lastTouchX;
+        lastTouchX = currentX;
+
+        targetRotation.current.y += deltaX * 0.01; // чувствительность
+      }
+    };
+
+    const handleTouchEnd = () => {
+      lastTouchX = null;
+    };
+
+    canvas.addEventListener('touchstart', handleTouchStart, { passive: true });
+    canvas.addEventListener('touchmove', handleTouchMove, { passive: true });
+    canvas.addEventListener('touchend', handleTouchEnd);
+    canvas.addEventListener('touchcancel', handleTouchEnd);
+
+    return () => {
+      canvas.removeEventListener('touchstart', handleTouchStart);
+      canvas.removeEventListener('touchmove', handleTouchMove);
+      canvas.removeEventListener('touchend', handleTouchEnd);
+      canvas.removeEventListener('touchcancel', handleTouchEnd);
+    };
+  }, [gl]);
+
+  // ✅ Зум колесиком
+  useEffect(() => {
+
     const canvas = gl.domElement;
     const handle = (event: WheelEvent) => {
       const rect = canvas.getBoundingClientRect();
@@ -106,9 +146,11 @@ export function HoverControlledModel({ url, onLoaded }: Props) {
 
     canvas.addEventListener('wheel', handle, { passive: false });
     return () => canvas.removeEventListener('wheel', handle);
+
+
   }, [gl]);
 
-  // Плавная анимация
+  // ✅ Плавная анимация
   useFrame(() => {
     if (groupRef.current) {
       currentRotation.current.x = THREE.MathUtils.lerp(

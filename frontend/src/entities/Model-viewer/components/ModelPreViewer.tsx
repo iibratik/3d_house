@@ -73,7 +73,7 @@ export function ModelPreViewer({
         </div>
       ) : modelUrl ? (
 
-        <Canvas style={{ pointerEvents: 'none' }} camera={{ position: new THREE.Vector3(10, 7, 5), fov: 50 }} gl={{ preserveDrawingBuffer: false }}>
+        <Canvas camera={{ position: new THREE.Vector3(10, 7, 5), fov: 50 }} gl={{ preserveDrawingBuffer: false }}>
           <ambientLight intensity={0.4} />
           <directionalLight position={[10, 10, 5]} intensity={0.8} />
           <directionalLight position={[-10, -10, -5]} intensity={0.3} />
@@ -99,7 +99,7 @@ export function ModelPreViewer({
       {isActive && (
         <>
           <div className="absolute bottom-4 left-4 text-xs text-gray-500 bg-white/80 px-2 py-1 rounded z-10">
-            Наведите мышь для поворота • Прокрутите для масштабирования {modelUrl}
+            Наведите мышь для поворота • Прокрутите для масштабирования
           </div>
           <button
             onClick={() => setActiveModelIndex(null)}

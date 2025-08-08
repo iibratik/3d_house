@@ -162,7 +162,7 @@ export default function ComplexPage() {
                 if (info) {
                   const blk = loadedBlocks?.find(b => b.name === info.block);
                   if (!blk) {
-                    console.warn(`Блок "${info.block}" не найден среди loadedBlocks`);
+
                     setSelectedFloorInfo(info);
                     setCurrentApartaments([]);
                     return;
@@ -376,7 +376,7 @@ export default function ComplexPage() {
                                     : 'border-gray-200 bg-gray-50 dark:bg-gray-700 dark:border-gray-600'
                                     }`}
                                   onClick={() => {
-                                    console.log(apt);
+
 
                                     setIsOpenApartModal(true);
                                     setSelectedApartment(apt);

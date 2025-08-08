@@ -37,4 +37,6 @@ body {
 
 .model-content canvas {
   pointer-events: none !important;
+  pointer-events: auto;
+  touch-action: none;
 }

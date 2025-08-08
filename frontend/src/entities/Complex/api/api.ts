@@ -27,9 +27,6 @@ export const complexApi = {
       if (Array.isArray(response.data) && response.data.length > 0) {
         return response.data;
       }
-
-      // Логируем как предупреждение, если массив пуст
-      console.warn(`❗️No blocks found for complexId=${complexId}`);
       return [];
     } catch (error) {
       console.error(`🔥 Ошибка при получении блоков для complexId=${complexId}:`, error);

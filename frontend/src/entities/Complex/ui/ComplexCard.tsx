@@ -155,7 +155,7 @@ export function ComplexCard({
           </div>
         </div>
         <Button className="w-full" onClick={() => {
-          console.log('Клик!');
+
           if (activeModelIndex !== null) {
             setActiveModelIndex(null);
             setTimeout(() => {
